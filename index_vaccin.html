@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>COVID-19 Vaccination Dashboard</title>
+    <link rel="stylesheet" href="css/map.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <!-- Main Dashboard Container -->
+    <div id="wrapper">
+        
+        <!-- Header Section -->
+        <header id="dashboardHeader">
+            <h1>COVID-19 Vaccination Analysis Dashboard</h1>
+            <p class="subtitle">Interactive visualizations of vaccine uptake across Europe</p>
+        </header>
+
+        <!-- Geographic Map Visualization -->
+        <section id="mapSection" class="viz-panel">
+            <div class="panel-header">
+                <h2>📍 Geographic Distribution</h2>
+                <p class="panel-description">Primary course vaccination uptake by country</p>
+            </div>
+            <div id="mapArea"></div>
+        </section>
+
+        <!-- Bar Chart Visualization -->
+        <section id="barSection" class="viz-panel">
+            <div class="panel-header">
+                <h2>📊 Vaccine Type Distribution</h2>
+                <p class="panel-description">Doses administered by vaccine manufacturer</p>
+            </div>
+            <div class="controls-container">
+                <label for="country1Select">Country 1:</label>
+                <select id="country1Select"></select>
+                <label for="country2Select">Country 2:</label>
+                <select id="country2Select"></select>
+            </div>
+            <div id="barPlot"></div>
+        </section>
+
+        <!-- Time Series Visualization -->
+        <section id="tsSection" class="viz-panel">
+            <div class="panel-header">
+                <h2>📈 Cumulative Uptake Over Time</h2>
+                <p class="panel-description">Vaccination progress across European countries</p>
+            </div>
+            <div class="controls-container">
+                <label for="countrySelect">Countries:</label>
+                <select id="countrySelect" multiple size="1">
+                </select>
+                <label for="doseTypeSelect">Dose Type:</label>
+                <select id="doseTypeSelect">
+                    <option value="FirstDose">First Dose</option>
+                    <option value="SecondDose" selected>Primary Course (2 doses)</option>
+                    <option value="DoseAdditional1">First Booster</option>
+                </select>
+            </div>
+            <div id="tsPlot"></div>
+        </section>
+
+    </div>
+
+    <!-- Load D3.js and main dashboard script -->
+    <script type="text/javascript" src="./js/d3.v7.min.js"></script>
+    <script type="module" src="./js/main.js?v=3"></script>
+
+</body>
+</html>
