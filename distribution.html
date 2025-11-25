@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="COVID-19 Case Fatality Rate (CFR) Analysis - Combined Box Plot and Violin Plot">
+    <title>COVID-19 Case Fatality Rate Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #ecf0f1;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .description {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+        }
+
+        .description h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .description p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .description ul {
+            margin-left: 20px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .viz-section {
+            margin-bottom: 50px;
+        }
+
+        .viz-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #boxPlot, #violinPlot {
+            width: 100%;
+            min-height: 400px;
+        }
+
+        #statistics {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #tooltip {
+            position: absolute;
+            display: none;
+            padding: 10px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 6px;
+            pointer-events: none;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrapper">
+        <header>
+            <h1>COVID-19 Case Fatality Rate (CFR) Analysis</h1>
+            <p class="subtitle">Combined Box Plot & Violin Plot - Weekly CFR Distribution (Top 10 European Countries)</p>
+        </header>
+
+        <div class="content">
+            <div class="description">
+                <h2>📊 Understanding Case Fatality Rate (CFR)</h2>
+                <p><strong>Case Fatality Rate (CFR)</strong> is calculated as: <em>(Weekly Deaths / Weekly Cases) × 100</em></p>
+                <p>This visualization shows the distribution of weekly CFR across the top 10 European countries by total cases. The combined plot reveals:</p>
+                <ul>
+                    <li><strong>Violin Plot (Teal):</strong> Shows the full distribution shape using kernel density estimation. Wider sections indicate higher frequency of CFR values at that level.</li>
+                    <li><strong>Box Plot (Purple):</strong> Overlaid on the violin, shows the five-number summary (minimum, Q1, median, Q3, maximum). The box represents the middle 50% of data (Q1 to Q3).</li>
+                    <li><strong>Yellow line:</strong> Median CFR (middle value when sorted)</li>
+                    <li><strong>Red dashed line:</strong> 1% CFR reference line</li>
+                    <li><strong>Data filtering:</strong> Only weeks with valid cases and deaths are included, with CFR capped at 10% for visualization clarity</li>
+                </ul>
+                <p style="margin-top: 10px;"><em>💡 Hover over the plots to see detailed CFR statistics for each country.</em></p>
+            </div>
+
+            <!-- Combined CFR Plot Section -->
+            <div class="viz-section">
+                <div class="viz-container">
+                    <div id="boxPlot"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #1abc9c; opacity: 0.3;"></div>
+                            <span>Violin - Density Distribution (Teal)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #9b59b6; opacity: 0.8;"></div>
+                            <span>Box - Quartiles (Purple)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f39c12; width: 30px; height: 3px;"></div>
+                            <span>Median (Yellow)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: red; width: 30px; height: 2px; border-top: 2px dashed red;"></div>
+                            <span>1% CFR Reference</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Violin plot container (hidden, used by JS) -->
+            <div class="viz-section" style="display: none;">
+                <div class="viz-container">
+                    <div id="violinPlot"></div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="viz-section">
+                <div id="statistics"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <script type="module" src="js/boxViolin.js?v=1"></script>
+</body>
+
+</html>
