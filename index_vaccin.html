@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes">
+    <meta name="description" content="Interactive COVID-19 vaccination dashboard with geographic maps and statistical visualizations">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>COVID-19 Vaccination Dashboard</title>
+    <link rel="stylesheet" href="css/map.css?v=22">
+    <link rel="stylesheet" href="css/index_vaccin.css?v=49">
+</head>
+
+<body>
+
+    <!-- Animated star field background -->
+    <div class="star-field">
+        <div class="layer"></div>
+        <div class="layer"></div>
+        <div class="layer"></div>
+    </div>
+
+    <!-- Shooting stars / comets -->
+    <div class="comet"></div>
+    <div class="comet"></div>
+    <div class="comet"></div>
+    <div class="comet"></div>
+
+    <div id="wrapper" role="main" aria-label="COVID-19 Vaccination Dashboard">
+        
+        <header id="dashboardHeader" role="banner">
+            <h1>COVID-19 Vaccination Analysis Dashboard</h1>
+            <p class="subtitle">Interactive visualizations of vaccine uptake across Europe</p>
+            
+            <nav class="global-controls" role="navigation" aria-label="Country selection controls">
+                <div class="control-group">
+                    <label for="globalCountry1Select">Country 1:</label>
+                    <select id="globalCountry1Select" aria-label="Select first country for comparison"></select>
+                </div>
+                <div class="control-group">
+                    <label for="globalCountry2Select">Country 2:</label>
+                    <select id="globalCountry2Select" aria-label="Select second country for comparison"></select>
+                </div>
+            </nav>
+            
+            <div class="analysis-toggle-container">
+                <button id="toggleAnalysisBtn" class="toggle-btn analysis-toggle" aria-label="Toggle Vaccination & COVID Analysis visibility">
+                    <span class="toggle-icon">📊</span>
+                    <span class="toggle-text">Vaccin & COVID Analysis</span>
+                </button>
+            </div>
+
+            <section id="heatmapSection" class="viz-panel" aria-label="Vaccination heatmap by age group">
+                <h3 class="heatmap-title">Vaccination by Age Group (Quarterly)</h3>
+                <div id="heatmap" role="img" aria-label="Heatmap showing vaccination doses by age group and quarter"></div>
+            </section>
+        </header>
+
+        <div class="content-container" role="region" aria-label="Visualization panels">
+            
+            <div class="side-panels" role="complementary" aria-label="Statistical charts">
+                <section id="barSection" class="viz-panel" aria-label="Vaccination bar chart by year">
+                    <h2 style="margin-bottom: 15px; color: #f4f5f6; font-size: 1.3rem;">Vaccination Doses by Year (2020-2023)</h2>
+                    <div id="barPlot" role="img" aria-label="Bar chart showing vaccination doses by year for selected countries"></div>
+                </section>
+
+                <!-- Time Series Visualization -->
+                <section id="tsSection" class="viz-panel" aria-label="Time series visualization">
+                    <div class="controls-container">
+                        <label for="doseTypeSelect">Dose Type:</label>
+                        <select id="doseTypeSelect" aria-label="Select dose type for time series">
+                            <option value="FirstDose">First Dose</option>
+                            <option value="SecondDose" selected>Primary Course (2 doses)</option>
+                            <option value="DoseAdditional1">First Booster</option>
+                        </select>
+                    </div>
+                    <div id="tsPlot" role="img" aria-label="Time series chart showing cumulative vaccination uptake"></div>
+                </section>
+            </div>
+
+
+            <div class="map-column" role="region" aria-label="Geographic visualizations">
+
+                <!-- Geographic Map Section - Split into Map + Stats -->
+                <section id="mapSection" class="viz-panel" aria-label="Geographic map of Europe">
+                    <h2 style="margin-bottom: 15px; color: #f4f4f5; font-size: 1.3rem;">European Vaccination Coverage Map</h2>
+                    <div class="map-container">
+                        <!-- Map Visualization -->
+                        <div id="mapArea" role="img" aria-label="Interactive map showing vaccination coverage across European countries"></div>
+                        
+                        <!-- Statistics Panel -->
+                        <aside id="mapStats" class="stats-panel" role="complementary" aria-label="Detailed vaccination statistics">
+                            <h3>Vaccination Statistics</h3>
+                            <div id="statsContent" aria-live="polite">
+                                <p class="loading-stats">Select countries to view statistics</p>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+                <!-- Kernel Density Plot Visualization - Full Width -->
+                <section id="kernelSection" class="viz-panel" aria-label="Kernel density plot">
+                    <div id="chart" role="img" aria-label="Kernel density plot comparing vaccination distribution between countries"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div id="tooltip" style="position: absolute; display: none; padding: 10px; background: #2c3e50; color: white; border-radius: 6px; pointer-events: none; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+    
+    <script>
+        // Set dashboard mode flag before other scripts load
+        window.__dashboardMode = true;
+        
+        // Toggle Analysis Button Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
+            
+            toggleAnalysisBtn.addEventListener('click', function() {
+                // Redirect to COVID analysis page
+                window.location.href = 'index_covid.html';
+            });
+        });
+    </script>
+    
+    <script type="text/javascript" src="./js/d3.v7.min.js"></script>
+    <script type="module" src="js/main_vaccin.js?v=40"></script>
+
+</body>
+</html>
