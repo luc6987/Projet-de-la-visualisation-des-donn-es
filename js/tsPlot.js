@@ -234,6 +234,7 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
             .style("fill", country.color)
             .style("opacity", 0)
             .text(`${finalUptake.toFixed(1)}%`)
+            .attr('fill','white')
             .transition()
             .duration(600)
             .delay(idx * 150 + 2000)
@@ -370,12 +371,14 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
             .attr("y1", 0)
             .attr("y2", 0)
             .attr("stroke", country.color)
+            .attr('fill','white')
             .attr("stroke-width", 2.5);
         
         legendItem.append("text")
             .attr("x", 25)
             .attr("y", 0)
             .attr("dy", "0.35em")
+            .attr('fill','white')
             .style("font-size", "11px")
             .text(`${country.countryName} (${country.country})`);
         

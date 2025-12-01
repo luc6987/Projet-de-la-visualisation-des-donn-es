@@ -1,0 +1,198 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #fff 0%, #e0d5ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: #e0d5ff;
+    font-weight: 500;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 25px;
+}
+
+.chart-section {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+}
+
+.chart-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+#heatmapSection, #stackedSection {
+    grid-column: 1 / -1;
+}
+
+.section-header {
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.section-header p {
+    font-size: 0.9rem;
+    color: #c4b5fd;
+}
+
+.chart-container {
+    width: 100%;
+    min-height: 400px;
+    position: relative;
+}
+
+#ageHeatmap {
+    min-height: 500px;
+}
+
+#stackedAreaChart {
+    min-height: 450px;
+}
+
+.region-selector {
+    margin-bottom: 15px;
+}
+
+.region-selector select {
+    width: 100%;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(167, 139, 250, 0.5);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.region-selector select:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #a78bfa;
+}
+
+.region-selector select option {
+    background: #1e1b4b;
+    color: #fff;
+    padding: 10px;
+}
+
+/* Tooltip */
+.viz-tooltip {
+    position: absolute;
+    background: rgba(30, 27, 75, 0.95);
+    backdrop-filter: blur(10px);
+    border: 2px solid #a78bfa;
+    border-radius: 12px;
+    padding: 15px;
+    color: #fff;
+    font-size: 13px;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* Legend */
+.legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #e0d5ff;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+}
+
+/* SVG Styling */
+svg text {
+    user-select: none;
+}
+
+.axis line, .axis path {
+    stroke: rgba(167, 139, 250, 0.3);
+}
+
+.axis text {
+    fill: #e0d5ff;
+    font-size: 11px;
+}
+
+.grid line {
+    stroke: rgba(167, 139, 250, 0.15);
+    stroke-dasharray: 2, 2;
+}

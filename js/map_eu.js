@@ -1,6 +1,9 @@
 
 import { CleanVaccin } from './clean.js';
 
+// France click handler callback
+let franceClickHandler = null;
+
 // Context object for map dimensions and data
 const ctx = {
     MAP_H: window.innerHeight / 2,
@@ -80,6 +83,15 @@ function makeGeo(vaccinData) {
         .attr('preserveAspectRatio', 'xMidYMid meet');
 
     const g = svgMap.append('g');
+
+    // Add zoom behavior
+    const zoom = d3.zoom()
+        .scaleExtent([1, 8])  // Min zoom: 1x, Max zoom: 8x
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+        });
+
+    svgMap.call(zoom);
 
     Promise.all([
         d3.json("data/europe.geojson")
@@ -214,6 +226,15 @@ function makeGeo(vaccinData) {
                 
                 // Remove tooltip
                 d3.select('.map-tooltip').style('opacity', 0).remove();
+            })
+            .on('click', function(event, d) {
+                const countryCode = d.properties.ISO2;
+                
+                // Handle France click to show detailed map
+                if (countryCode === 'FR' && franceClickHandler) {
+                    event.stopPropagation();
+                    franceClickHandler();
+                }
             });
         
         addLegend(svgMap, colorScale);
@@ -222,10 +243,10 @@ function makeGeo(vaccinData) {
 
 
 function addLegend(svg, colorScale) {
-    const legendWidth = 20;
-    const legendHeight = 200;
-    const legendX = ctx.MAP_W - 60;  // Position near right edge
-    const legendY = 50;
+    const legendWidth = 15;
+    const legendHeight = 150;
+    const legendX = ctx.MAP_W - 50;  // Position near right edge
+    const legendY = 40;
 
     // Create legend group
     const legend = svg.append('g')
@@ -269,16 +290,27 @@ function addLegend(svg, colorScale) {
         .tickFormat(d => `${d}%`);
 
     // Add axis to legend
-    legend.append('g')
+    const axisGroup = legend.append('g')
         .attr('transform', `translate(${legendWidth}, 0)`)
         .call(legendAxis);
+    
+    // Style axis text (percentages) to white - force white color
+    axisGroup.selectAll('text')
+        .style('fill', 'white')
+        .style('color', 'white')
+        .attr('fill', 'white');
+
+    // Style axis lines and ticks to white
+    axisGroup.selectAll('path, line')
+        .style('stroke', 'white')
+        .attr('stroke', 'white');
 
     // Add legend title
     legend.append('text')
         .attr('x', legendWidth / 2)
         .attr('y', -10)
         .attr('text-anchor', 'middle')
-        .style('font-size', '12px')
+        .style('font-size', '11px')
         .style('font-weight', 'bold')
         .style('fill', 'white')
         .text('Uptake (%)');
@@ -809,7 +841,12 @@ function getCovidCountryStats(covidData, countryCode) {
     };
 }
 
-export { createMapViz, highlightCountries, addCovidOverlay, showCovidStats };
+// Function to set the France click handler
+function setFranceClickHandler(callback) {
+    franceClickHandler = callback;
+}
+
+export { createMapViz, highlightCountries, addCovidOverlay, showCovidStats, setFranceClickHandler };
 if (typeof window !== 'undefined') {
     window.addEventListener('load', () => {
         // Only auto-initialize if not being used as a module

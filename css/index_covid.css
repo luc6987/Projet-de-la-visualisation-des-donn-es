@@ -63,94 +63,29 @@ body, html {
    Uses Flexbox to create a flexible, responsive layout
    ============================================ */
 
-/* Main wrapper div that contains everything on the page */
+/* Wrapper - layout controlled by Tailwind */
 #wrapper {
-    display: flex;              /* Use flexbox layout system */
-    flex-direction: row;        /* Arrange children in a horizontal row (left to right) */
-    min-height: 100vh;          /* Minimum height = 100% of viewport height (whole screen) */
-    width: 100%;                /* Take full width */
-    max-width: 100vw;           /* Maximum width = 100% of viewport width */
+    position: relative;
 }
 
-/* Container that holds the visualization panels */
+/* Content container - layout controlled by Tailwind */
 .content-container {
-    display: flex;              /* Use flexbox for arranging visualizations */
-    flex-wrap: nowrap;          /* Don't allow items to wrap to next line */
-    gap: 0px;                   /* No spacing between flex items */
-    flex: 1;                    /* Grow to fill available space */
-    width: 100%;                /* Take full width */
-    max-width: 100%;            /* Don't exceed parent width */
-    overflow: hidden;           /* Hide content that overflows the container */
+    overflow-x: hidden;
 }
 
-/* ============================================
-   SIDE PANELS (LEFT COLUMN)
-   Contains the bar chart and time series visualizations
-   ============================================ */
-
+/* Side panels - layout controlled by Tailwind */
 .side-panels {
-    flex: 1 1 0;                /* flex-grow: 1, flex-shrink: 1, flex-basis: 0 */
-                                /* This means: can grow, can shrink, starting from 0 width */
-    display: flex;              /* Use flexbox for vertical stacking */
-    flex-direction: column;     /* Stack children vertically (top to bottom) */
-    gap: 0px;                   /* No spacing between panels */
-    min-width: 350px;           /* Minimum width to prevent panel from becoming too narrow */
-    max-width: none;            /* No maximum width restriction */
-    order: 1;                   /* Display order: appears first (left side) */
+    min-width: 0;
 }
 
-/* ============================================
-   MAP COLUMN (RIGHT COLUMN)
-   Contains the map and kernel density plot
-   ============================================ */
-
+/* Map column - layout controlled by Tailwind */
 .map-column {
-    flex: 1 1 0;                /* flex-grow: 2, flex-shrink: 1, flex-basis: 0 */
-                                /* This means: can grow twice as much as side-panels, can shrink, starting from 0 */
-    display: flex;              /* Use flexbox for vertical stacking */
-    flex-direction: column;     /* Stack children vertically */
-    gap: 0px;                   /* No spacing between panels */
-    min-width: 450px;           /* Minimum width for map area */
-    max-width: 100%;            /* Can take up to full container width */
+    min-width: 0;
 }
 
-/* ============================================
-   INDIVIDUAL VISUALIZATION PANELS
-   Each visualization section with fixed maximum heights
-   ============================================ */
-
-/* Map visualization panel */
-#mapSection {
-    flex: 1 1 0;                    /* Grow to fill available space */
-    max-height: 50vh;           /* Maximum height = 50% of viewport height (half screen) */
-    overflow: hidden;           /* Hide any content that exceeds max-height */
-    order: 2;                   /* Display order: appears second */
-}
-
-/* Box/Violin plot panel for COVID analysis */
-#boxViolinSection {
-    flex: 1 1 0;
-    max-height: 50vh;
-    overflow: hidden;
-}
-
-/* Growth rate comparison panel for COVID analysis */
-#growthRateSection {
-    flex: 1 1 0;
-    max-height: 50vh;
-    overflow: hidden;
-}
-
-/* Vaccination vs Cases Time Series panel */
-#tsCovidSection {
-    flex: 1 1 0;
-    max-height: 50vh;
-    overflow: hidden;
-    order: 3;                   /* Display order: appears third (after map) */
-}
-
+/* Visualization sections - layout controlled by Tailwind */
 #tsCovidPlot {
-    position: relative;         /* Allow absolute positioning of button inside */
+    position: relative;
 }
 
 /* ============================================
@@ -421,20 +356,12 @@ body, html {
    Split layout: map on left, statistics on right
    ============================================ */
 
-.map-container {
-    display: flex;              /* Use flexbox for side-by-side layout */
-    gap: 15px;                  /* Space between map and statistics panel */
-    height: 100%;               /* Take full height of parent container */
-    width: 100%;                /* Take full width of parent container */
-}
+/* Map container - layout controlled by Tailwind */
 
 /* Map visualization area */
 #mapArea {
-    flex: 2;                    /* Take 2 parts of available space (twice as wide as stats panel) */
     background: #f7fafc;        /* Very light gray background */
     border-radius: 10px;        /* Rounded corners */
-    overflow: auto;             /* Show scrollbars if content is too large */
-    min-width: 400px;           /* Minimum width to keep map readable */
     position: relative;         /* Position context for absolutely positioned children */
 }
 
@@ -451,13 +378,8 @@ body, html {
    ============================================ */
 
 .stats-panel {
-    flex: 1;                    /* Take 1 part of available space (half the width of map) */
     background: #ffffff;        /* White background */
     border-radius: 10px;        /* Rounded corners */
-    padding: 12px;              /* Space inside the panel */
-    overflow-y: auto;           /* Show vertical scrollbar if content is too tall */
-    border: 2px solid #e2e8f0;  /* Light gray border */
-    min-width: 300px;           /* Minimum width to keep statistics readable */
 }
 
 /* h3 heading inside statistics panel */
@@ -651,82 +573,4 @@ body, html {
     60%, 100% { content: '...'; }  /* Show 3 dots for rest of animation */
 }
 
-/* ============================================
-   RESPONSIVE DESIGN - LARGE SCREENS
-   Layout adjustments for screens between 1000px and 1400px
-   ============================================ */
-
-@media (max-width: 1400px) {
-    /* Stack visualizations vertically instead of horizontally */
-    .content-container {
-        flex-direction: column;  /* Change from row to column layout */
-    }
-    
-    /* Move map to the top */
-    #mapSection {
-        order: 1;                /* Display first */
-        min-height: 600px;       /* Ensure map has good height */
-    }
-    
-    /* Side panels become horizontal row */
-    .side-panels {
-        order: 2;                /* Display after map */
-        flex-direction: row;     /* Arrange bar chart and time series side-by-side */
-        min-width: 100%;         /* Take full width */
-    }
-    
-    /* Kernel plot at the bottom */
-    #kernelSection {
-        order: 3;                /* Display last */
-    }
-}
-
-/* ============================================
-   RESPONSIVE DESIGN - MEDIUM SCREENS
-   Layout adjustments for screens up to 900px wide
-   ============================================ */
-
-@media (max-width: 900px) {
-    /* Stack side panels vertically */
-    .side-panels {
-        flex-direction: column;  /* Stack box/violin and growth rate vertically */
-    }
-    
-    /* Ensure minimum height for readability */
-    #boxViolinSection, #growthRateSection {
-        min-height: 400px;       /* Minimum height for each visualization */
-    }
-}
-
-/* ============================================
-   RESPONSIVE DESIGN - SMALL SCREENS (Mobile)
-   Layout adjustments for screens up to 768px wide
-   ============================================ */
-
-@media (max-width: 768px) {
-    /* Reduce padding and spacing on small screens */
-    #wrapper {
-        padding: 10px;           /* Less padding around wrapper */
-        gap: 0px;                /* No gap between elements */
-    }
-    
-    /* Smaller header on mobile */
-    #dashboardHeader {
-        padding: 20px 15px;      /* Less padding */
-    }
-    
-    /* Smaller title on mobile */
-    #dashboardHeader h1 {
-        font-size: 1.75rem;      /* Smaller than desktop (was 2.5rem) */
-    }
-    
-    /* Smaller panel headers on mobile */
-    .panel-header h2 {
-        font-size: 1.25rem;      /* Smaller than desktop (was 1.5rem) */
-    }
-    
-    /* Ensure map has good height on mobile */
-    #mapSection {
-        min-height: 500px;       /* Minimum height for map */
-    }
-}
+/* All responsive layout now controlled by Tailwind classes in HTML */

@@ -7,113 +7,110 @@
     <meta name="description" content="COVID-19 Analysis Dashboard with Case Fatality Rate and Growth Rate Comparison">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>COVID-19 Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/index_covid.css">
 </head>
 
 <body>
 
-    <div id="wrapper" role="main" aria-label="COVID-19 Analysis Dashboard">
-        
-        <header id="dashboardHeader" role="banner">
-            <h1>COVID-19 In-Depth Analysis Dashboard</h1>
-            <p class="subtitle">Case Fatality Rate & Growth Rate Analysis for European Countries</p>
-            
-            <nav class="global-controls" role="navigation" aria-label="Country selection controls">
-                <div class="control-group">
-                    <label for="country1Select">Country 1:</label>
-                    <select id="country1Select" aria-label="Select first country for comparison"></select>
+    <div id="wrapper" role="main" aria-label="COVID-19 Analysis Dashboard" class="flex flex-col xl:flex-row min-h-screen w-full relative z-10 px-2 sm:px-4 lg:px-5">
+
+        <header id="dashboardHeader" role="banner" class="text-center p-3 lg:p-4 xl:p-5 xl:w-[30%] overflow-y-auto">
+            <h1 class="text-xl sm:text-2xl lg:text-3xl xl:text-2xl font-bold mb-2">COVID-19 In-Depth Analysis Dashboard</h1>
+            <p class="subtitle text-xs sm:text-sm lg:text-base xl:text-sm mb-3">Case Fatality Rate & Growth Rate Analysis for European Countries</p>
+
+            <nav class="global-controls flex flex-col gap-3 mt-3 p-2 sm:p-3 rounded-lg" role="navigation" aria-label="Country selection controls">
+                <div class="control-group flex flex-col gap-1 w-full">
+                    <label for="country1Select" class="text-xs sm:text-sm font-semibold text-left">Country 1:</label>
+                    <select id="country1Select" aria-label="Select first country for comparison" class="px-2 py-1.5 border-2 rounded-lg text-xs sm:text-sm cursor-pointer w-full"></select>
                 </div>
-                <div class="control-group">
-                    <label for="country2Select">Country 2:</label>
-                    <select id="country2Select" aria-label="Select second country for comparison"></select>
+                <div class="control-group flex flex-col gap-1 w-full">
+                    <label for="country2Select" class="text-xs sm:text-sm font-semibold text-left">Country 2:</label>
+                    <select id="country2Select" aria-label="Select second country for comparison" class="px-2 py-1.5 border-2 rounded-lg text-xs sm:text-sm cursor-pointer w-full"></select>
                 </div>
-                <div class="control-group">
-                    <button id="updateBtn" class="toggle-btn" aria-label="Update comparison">
-                        <span class="toggle-icon">🔄</span>
-                        <span class="toggle-text">Update</span>
-                    </button>
-                </div>
+                <button id="updateBtn" class="toggle-btn flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all w-full" aria-label="Update comparison">
+                    <span class="toggle-icon text-lg">🔄</span>
+                    <span class="toggle-text text-sm">Update</span>
+                </button>
             </nav>
-            
-            <nav class="overlay-controls" role="navigation" aria-label="COVID overlay controls">
-                <div class="control-group">
-                    <label for="covidOverlayType">Overlay:</label>
-                    <select id="covidOverlayType" aria-label="Select COVID data overlay type">
+
+            <nav class="overlay-controls flex flex-col gap-3 mt-2 p-2 sm:p-3 rounded-lg" role="navigation" aria-label="COVID overlay controls">
+                <div class="control-group flex flex-col gap-1 w-full">
+                    <label for="covidOverlayType" class="text-xs sm:text-sm font-semibold text-left">Overlay:</label>
+                    <select id="covidOverlayType" aria-label="Select COVID data overlay type" class="px-2 py-1.5 border-2 rounded-lg text-xs sm:text-sm cursor-pointer w-full">
                         <option value="none">None</option>
                         <option value="cases">Positive Cases</option>
                         <option value="deaths">Deaths</option>
                     </select>
                 </div>
-                <div class="control-group">
-                    <label for="covidOverlayYear">Year:</label>
-                    <select id="covidOverlayYear" aria-label="Select year for COVID overlay">
+                <div class="control-group flex flex-col gap-1 w-full">
+                    <label for="covidOverlayYear" class="text-xs sm:text-sm font-semibold text-left">Year:</label>
+                    <select id="covidOverlayYear" aria-label="Select year for COVID overlay" class="px-2 py-1.5 border-2 rounded-lg text-xs sm:text-sm cursor-pointer w-full">
                         <option value="2020">2020</option>
                         <option value="2021">2021</option>
                         <option value="2022">2022</option>
                         <option value="2023" selected>2023</option>
                     </select>
                 </div>
-                <div class="control-group">
-                    <button id="toggleOverlayBtn" class="toggle-btn" aria-label="Toggle COVID overlay on/off">
-                        <span class="toggle-icon">●</span>
-                        <span class="toggle-text">OFF</span>
-                    </button>
-                </div>
+                <button id="toggleOverlayBtn" class="toggle-btn flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all w-full" aria-label="Toggle COVID overlay on/off">
+                    <span class="toggle-icon">●</span>
+                    <span class="toggle-text text-sm">OFF</span>
+                </button>
             </nav>
-            
-            <div class="analysis-toggle-container">
-                <button id="backBtn" class="toggle-btn analysis-toggle" aria-label="Back to Vaccination Dashboard">
-                    <span class="toggle-icon">←</span>
+
+            <div class="analysis-toggle-container flex justify-center p-3 mt-2 border-t">
+                <button id="backBtn" class="toggle-btn analysis-toggle flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold transition-all w-full text-sm" aria-label="Back to Vaccination Dashboard">
+                    <span class="toggle-icon text-lg">←</span>
                     <span class="toggle-text">Back to Vaccination Dashboard</span>
                 </button>
             </div>
         </header>
 
-        <div class="content-container" role="region" aria-label="Visualization panels">
-            
-            <aside class="side-panels" role="complementary" aria-label="Statistical charts">
+        <div class="content-container flex flex-col xl:flex-row flex-wrap gap-4 sm:gap-5 flex-1 w-full overflow-x-hidden xl:w-[70%]" role="region" aria-label="Visualization panels">
+
+            <aside class="side-panels flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="complementary" aria-label="Statistical charts">
                 
                 <!-- Box & Violin Plot Section -->
-                <section id="boxViolinSection" class="viz-panel" aria-label="Case Fatality Rate Distribution">
-                    <h2 style="margin-bottom: 15px; color: #2c3e50; font-size: 1.3rem;">Case Fatality Rate (CFR)</h2>
-                    <div id="boxViolinPlot" role="img" aria-label="Box and violin plot showing CFR distribution"></div>
+                <section id="boxViolinSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Case Fatality Rate Distribution">
+                    <h2 class="mb-4 text-lg sm:text-xl lg:text-2xl font-semibold">Case Fatality Rate (CFR)</h2>
+                    <div id="boxViolinPlot" role="img" aria-label="Box and violin plot showing CFR distribution" class="flex-1 overflow-hidden"></div>
                     <div id="boxViolinStats"></div>
                 </section>
 
                 <!-- Growth Rate Comparison Section -->
-                <section id="growthRateSection" class="viz-panel" aria-label="Growth Rate Comparison">
-                    <h2 style="margin-bottom: 15px; color: #2c3e50; font-size: 1.3rem;">Daily Growth Rate</h2>
-                    <div id="growthRatePlot" role="img" aria-label="Line chart showing daily growth rate comparison"></div>
+                <section id="growthRateSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Growth Rate Comparison">
+                    <h2 class="mb-4 text-lg sm:text-xl lg:text-2xl font-semibold">Daily Growth Rate</h2>
+                    <div id="growthRatePlot" role="img" aria-label="Line chart showing daily growth rate comparison" class="flex-1 overflow-hidden"></div>
                     <div id="growthRateStats"></div>
                 </section>
-                
+
             </aside>
 
-            <div class="map-column" role="region" aria-label="Geographic visualizations">
+            <div class="map-column flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="region" aria-label="Geographic visualizations">
 
                 <!-- Geographic Map Section -->
-                <section id="mapSection" class="viz-panel" aria-label="Geographic map of Europe">
-                    <h2 style="margin-bottom: 15px; color: #2c3e50; font-size: 1.3rem;">European COVID-19 Impact Map</h2>
-                    <div class="map-container">
+                <section id="mapSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[400px] sm:h-[450px] xl:h-[50vh]" aria-label="Geographic map of Europe">
+                    <h2 class="mb-4 text-lg sm:text-xl lg:text-2xl font-semibold">European COVID-19 Impact Map</h2>
+                    <div class="map-container flex flex-col md:flex-row gap-3 sm:gap-4 flex-1 overflow-hidden min-h-0 min-w-0">
                         <!-- Map Visualization -->
-                        <div id="mapArea" role="img" aria-label="Interactive map showing COVID data across European countries"></div>
-                        
+                        <div id="mapArea" role="img" aria-label="Interactive map showing COVID data across European countries" class="flex-1 md:flex-[3] overflow-auto w-full"></div>
+
                         <!-- Statistics Panel -->
-                        <aside id="mapStats" class="stats-panel" role="complementary" aria-label="Detailed COVID statistics">
-                            <h3>COVID-19 Statistics</h3>
+                        <aside id="mapStats" class="stats-panel flex-1 md:flex-[1] p-2 sm:p-3 overflow-y-auto border-2 rounded-lg max-h-[200px] md:max-h-none w-full" role="complementary" aria-label="Detailed COVID statistics">
+                            <h3 class="text-sm sm:text-base font-bold mb-2 pb-2 border-b-2">COVID-19 Statistics</h3>
                             <div id="statsContent" aria-live="polite">
-                                <p class="loading-stats">Select countries to view statistics</p>
+                                <p class="loading-stats italic text-center p-4">Select countries to view statistics</p>
                             </div>
                         </aside>
                     </div>
                 </section>
 
                 <!-- Vaccination vs Cases Time Series Section -->
-                <section id="tsCovidSection" class="viz-panel" aria-label="Vaccination vs COVID Cases Time Series">
-                    <h2 style="margin-bottom: 15px; color: #2c3e50; font-size: 1.3rem;">Weekly COVID Cases vs Vaccinations - Normalized</h2>
-                    <div id="tsCovidPlot" role="img" aria-label="Time series showing vaccination and COVID cases comparison"></div>
+                <section id="tsCovidSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Vaccination vs COVID Cases Time Series">
+                    <h2 class="mb-4 text-lg sm:text-xl lg:text-2xl font-semibold">Weekly COVID Cases vs Vaccinations - Normalized</h2>
+                    <div id="tsCovidPlot" role="img" aria-label="Time series showing vaccination and COVID cases comparison" class="flex-1 overflow-auto"></div>
                 </section>
-                
+
             </div>
         </div>
     </div>

@@ -7,8 +7,9 @@
     <meta name="description" content="Interactive COVID-19 vaccination dashboard with geographic maps and statistical visualizations">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>COVID-19 Vaccination Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/map.css?v=22">
-    <link rel="stylesheet" href="css/index_vaccin.css?v=49">
+    <link rel="stylesheet" href="css/index_vaccin.css?v=24">
 </head>
 
 <body>
@@ -26,80 +27,80 @@
     <div class="comet"></div>
     <div class="comet"></div>
 
-    <div id="wrapper" role="main" aria-label="COVID-19 Vaccination Dashboard">
-        
-        <header id="dashboardHeader" role="banner">
-            <h1>COVID-19 Vaccination Analysis Dashboard</h1>
-            <p class="subtitle">Interactive visualizations of vaccine uptake across Europe</p>
-            
-            <nav class="global-controls" role="navigation" aria-label="Country selection controls">
-                <div class="control-group">
-                    <label for="globalCountry1Select">Country 1:</label>
-                    <select id="globalCountry1Select" aria-label="Select first country for comparison"></select>
+    <div id="wrapper" role="main" aria-label="COVID-19 Vaccination Dashboard" class="flex flex-col xl:flex-row min-h-screen w-full relative z-10 px-2 sm:px-4 lg:px-5">
+
+        <header id="dashboardHeader" role="banner" class="text-center p-4 lg:p-6 xl:p-8">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">COVID-19 Vaccination Analysis Dashboard</h1>
+            <p class="subtitle text-sm sm:text-base lg:text-lg text-white mb-4">Interactive visualizations of vaccine uptake across Europe</p>
+
+            <nav class="global-controls flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mt-4 p-3 sm:p-4 bg-slate-900/60 rounded-lg border border-purple-500/30" role="navigation" aria-label="Country selection controls">
+                <div class="control-group flex items-center gap-2 w-full sm:w-auto">
+                    <label for="globalCountry1Select" class="text-sm sm:text-base font-semibold text-white">Country 1:</label>
+                    <select id="globalCountry1Select" aria-label="Select first country for comparison" class="px-3 py-2 border-2 border-slate-400/30 rounded-lg bg-white/10 text-white text-sm sm:text-base cursor-pointer min-w-[150px] sm:min-w-[200px]"></select>
                 </div>
-                <div class="control-group">
-                    <label for="globalCountry2Select">Country 2:</label>
-                    <select id="globalCountry2Select" aria-label="Select second country for comparison"></select>
+                <div class="control-group flex items-center gap-2 w-full sm:w-auto">
+                    <label for="globalCountry2Select" class="text-sm sm:text-base font-semibold text-white">Country 2:</label>
+                    <select id="globalCountry2Select" aria-label="Select second country for comparison" class="px-3 py-2 border-2 border-slate-400/30 rounded-lg bg-white/10 text-white text-sm sm:text-base cursor-pointer min-w-[150px] sm:min-w-[200px]"></select>
                 </div>
             </nav>
             
-            <div class="analysis-toggle-container">
-                <button id="toggleAnalysisBtn" class="toggle-btn analysis-toggle" aria-label="Toggle Vaccination & COVID Analysis visibility">
-                    <span class="toggle-icon">📊</span>
+            <div class="analysis-toggle-container flex justify-center p-4 mt-2 border-t border-white/20">
+                <button id="toggleAnalysisBtn" class="toggle-btn analysis-toggle flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg font-bold hover:from-purple-800 hover:to-purple-600 transition-all" aria-label="Toggle Vaccination & COVID Analysis visibility">
+                    <span class="toggle-icon text-xl">📊</span>
                     <span class="toggle-text">Vaccin & COVID Analysis</span>
                 </button>
             </div>
 
-            <section id="heatmapSection" class="viz-panel" aria-label="Vaccination heatmap by age group">
-                <h3 class="heatmap-title">Vaccination by Age Group (Quarterly)</h3>
-                <div id="heatmap" role="img" aria-label="Heatmap showing vaccination doses by age group and quarter"></div>
+            <section id="heatmapSection" class="viz-panel mt-4 p-3 sm:p-4 w-full h-[300px] sm:h-[350px] lg:h-[400px] flex flex-col" aria-label="Vaccination heatmap by age group">
+                <h3 class="heatmap-title text-sm sm:text-base lg:text-lg font-semibold text-white mb-2 text-center">Vaccination by Age Group (Quarterly)</h3>
+                <div id="heatmap" role="img" aria-label="Heatmap showing vaccination doses by age group and quarter" class="w-full flex-1 flex items-center justify-center overflow-hidden"></div>
             </section>
         </header>
 
-        <div class="content-container" role="region" aria-label="Visualization panels">
+        <div class="content-container flex flex-col xl:flex-row flex-wrap gap-4 sm:gap-5 flex-1 w-full overflow-x-hidden" role="region" aria-label="Visualization panels">
             
-            <div class="side-panels" role="complementary" aria-label="Statistical charts">
-                <section id="barSection" class="viz-panel" aria-label="Vaccination bar chart by year">
-                    <h2 style="margin-bottom: 15px; color: #f4f5f6; font-size: 1.3rem;">Vaccination Doses by Year (2020-2023)</h2>
-                    <div id="barPlot" role="img" aria-label="Bar chart showing vaccination doses by year for selected countries"></div>
+            <div class="side-panels flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="complementary" aria-label="Statistical charts">
+                <section id="barSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Vaccination bar chart by year">
+                    <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">Vaccination Doses by Year (2020-2023)</h2>
+                    <div id="barPlot" role="img" aria-label="Bar chart showing vaccination doses by year for selected countries" class="flex-1 overflow-hidden"></div>
                 </section>
 
                 <!-- Time Series Visualization -->
-                <section id="tsSection" class="viz-panel" aria-label="Time series visualization">
-                    <div class="controls-container">
-                        <label for="doseTypeSelect">Dose Type:</label>
-                        <select id="doseTypeSelect" aria-label="Select dose type for time series">
+                <section id="tsSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Time series visualization">
+                    <div class="controls-container flex items-center gap-2 mb-3 p-2 sm:p-3 bg-slate-900/50 rounded-lg border border-purple-500/30">
+                        <label for="doseTypeSelect" class="text-sm sm:text-base font-semibold text-white">Dose Type:</label>
+                        <select id="doseTypeSelect" aria-label="Select dose type for time series" class="flex-1 px-2 sm:px-3 py-1 sm:py-2 border-2 border-slate-400/30 rounded-md bg-white/10 text-white text-sm sm:text-base cursor-pointer">
                             <option value="FirstDose">First Dose</option>
                             <option value="SecondDose" selected>Primary Course (2 doses)</option>
                             <option value="DoseAdditional1">First Booster</option>
                         </select>
                     </div>
-                    <div id="tsPlot" role="img" aria-label="Time series chart showing cumulative vaccination uptake"></div>
+                    <div id="tsPlot" role="img" aria-label="Time series chart showing cumulative vaccination uptake" class="flex-1 overflow-hidden"></div>
                 </section>
             </div>
 
 
-            <div class="map-column" role="region" aria-label="Geographic visualizations">
+            <div class="map-column flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="region" aria-label="Geographic visualizations">
 
                 <!-- Geographic Map Section - Split into Map + Stats -->
-                <section id="mapSection" class="viz-panel" aria-label="Geographic map of Europe">
-                    <h2 style="margin-bottom: 15px; color: #f4f4f5; font-size: 1.3rem;">European Vaccination Coverage Map</h2>
-                    <div class="map-container">
+                <section id="mapSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[400px] sm:h-[450px] xl:h-[50vh]" aria-label="Geographic map of Europe">
+                    <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">European Vaccination Coverage Map</h2>
+                    <div class="map-container flex flex-col md:flex-row gap-3 sm:gap-4 flex-1 overflow-hidden min-h-0 min-w-0">
                         <!-- Map Visualization -->
-                        <div id="mapArea" role="img" aria-label="Interactive map showing vaccination coverage across European countries"></div>
-                        
+                        <div id="mapArea" role="img" aria-label="Interactive map showing vaccination coverage across European countries" class="flex-1 md:flex-[3] overflow-auto w-full"></div>
+
                         <!-- Statistics Panel -->
-                        <aside id="mapStats" class="stats-panel" role="complementary" aria-label="Detailed vaccination statistics">
-                            <h3>Vaccination Statistics</h3>
+                        <aside id="mapStats" class="stats-panel flex-1 md:flex-[1] p-2 sm:p-3 overflow-y-auto border-2 border-slate-300/20 rounded-lg max-h-[200px] md:max-h-none w-full" role="complementary" aria-label="Detailed vaccination statistics">
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 pb-2 border-b-2 border-slate-300/20">Vaccination Statistics</h3>
                             <div id="statsContent" aria-live="polite">
-                                <p class="loading-stats">Select countries to view statistics</p>
+                                <p class="loading-stats text-white italic text-center p-4">Select countries to view statistics</p>
                             </div>
                         </aside>
                     </div>
                 </section>
                 <!-- Kernel Density Plot Visualization - Full Width -->
-                <section id="kernelSection" class="viz-panel" aria-label="Kernel density plot">
-                    <div id="chart" role="img" aria-label="Kernel density plot comparing vaccination distribution between countries"></div>
+                <section id="kernelSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Kernel density plot">
+                    <div id="chart" role="img" aria-label="Kernel density plot comparing vaccination distribution between countries" class="flex-1 overflow-hidden"></div>
                 </section>
             </div>
         </div>
@@ -122,7 +123,7 @@
     </script>
     
     <script type="text/javascript" src="./js/d3.v7.min.js"></script>
-    <script type="module" src="js/main_vaccin.js?v=40"></script>
+    <script type="module" src="js/main_vaccin.js?v=70"></script>
 
 </body>
 </html>

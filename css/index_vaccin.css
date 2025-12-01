@@ -288,100 +288,30 @@ body::before {
    Uses Flexbox to create a flexible, responsive layout
    ============================================ */
 
-/* Main wrapper div that contains everything on the page */
+/* Main wrapper - layout controlled by Tailwind classes */
 #wrapper {
-    display: flex;              /* Use flexbox layout system */
-    flex-direction: row;        /* Arrange children in a horizontal row (left to right) */
-    min-height: 100vh;          /* Minimum height = 100% of viewport height (whole screen) */
-    width: 100%;                /* Take full width */
-    max-width: 100vw;           /* Maximum width = 100% of viewport width */
     position: relative;
     z-index: 10;
-    padding: 0 clamp(10px, 2vw, 20px); /* Responsive horizontal padding */
 }
 
+/* Content container - layout controlled by Tailwind classes */
 .content-container {
-    display: flex;
-    flex-wrap: wrap;   /* <-- allow rows to wrap */
-    gap: 20px;         
-    flex: 1;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;  /* only hide horizontal overflow */
-    overflow-y: visible; /* allow vertical expansion */
-    align-items: stretch;
-    min-width: 0;
-    min-height: 0;
+    overflow-x: hidden;
 }
 
-/* ============================================
-   SIDE PANELS (LEFT COLUMN)
-   Contains the bar chart and time series visualizations
-   ============================================ */
-
+/* Side panels - layout controlled by Tailwind classes */
 .side-panels {
-    flex: 1 1 0;                /* flex-grow: 1, flex-shrink: 1, flex-basis: 0 */
-                                /* This means: can grow, can shrink, starting from 0 width */
-    display: flex;              /* Use flexbox for vertical stacking */
-    flex-direction: column;     /* Stack children vertically (top to bottom) */
-    gap: 0px;                   /* No spacing between panels */
-           /* Minimum width to prevent panel from becoming too narrow */
-    max-width: none;            /* No maximum width restriction */
-    order: 1;                   /* Display order: appears first (left side) */
     min-width: 0;
     min-height: 0;
 }
 
-/* ============================================
-   MAP COLUMN (RIGHT COLUMN)
-   Contains the map and kernel density plot
-   ============================================ */
-
+/* Map column - layout controlled by Tailwind classes */
 .map-column {
-    flex: 1 1 0;                /* flex-grow: 2, flex-shrink: 1, flex-basis: 0 */
-                                /* This means: can grow twice as much as side-panels, can shrink, starting from 0 */
-    display: flex;              /* Use flexbox for vertical stacking */
-    flex-direction: column;     /* Stack children vertically */
-    gap: 0px;                   /* No spacing between panels */
-    min-width: 0;               /* Let it shrink on small screens */
-    max-width: 100%;            /* Can take up to full container width */
+    min-width: 0;
     min-height: 0;
 }
 
-/* ============================================
-   INDIVIDUAL VISUALIZATION PANELS
-   Each visualization section with fixed maximum heights
-   ============================================ */
-
-/* Map visualization panel */
-#mapSection {
-    flex: 1 1 0;                    /* Grow to fill available space */
-    max-height: 50vh;           /* Maximum height = 50% of viewport height (half screen) */
-    overflow: hidden;           /* Hide any content that exceeds max-height */
-    order: 2;                   /* Display order: appears second */
-}
-
-/* Bar chart panel */
-#barSection {
-    flex: 1 1 0;                    /* Grow to fill available space */
-    max-height: 50vh;           /* Maximum height = 50% of viewport height */
-    overflow: hidden;           /* Hide overflow content */
-}
-
-/* Time series panel */
-#tsSection {
-    flex: 1 1 0;                    /* Grow to fill available space */
-    max-height: 50vh;           /* Maximum height = 50% of viewport height */
-    overflow: hidden;           /* Hide overflow content */
-}
-
-/* Kernel density plot panel */
-#kernelSection {
-    flex: 1 1 0;                    /* Grow to fill available space */
-    max-height: 50vh;           /* Maximum height = 50% of viewport height */
-    overflow: hidden;           /* Hide overflow content */
-    order: 3;                   /* Display order: appears third (bottom) */
-}
+/* Visualization sections - layout controlled by Tailwind classes */
 
 /* ============================================
    HEADER SECTION
@@ -389,11 +319,13 @@ body::before {
    ============================================ */
 
 #dashboardHeader {
-    text-align: center;         /* Center all text horizontally */
-    padding: clamp(15px, 3vw, 30px) clamp(10px, 2vw, 20px); /* Responsive padding */
-    background: transparent;    /* Transparent to see stars */
-    border-radius: 15px;        /* Rounded corners with 15px radius */
-    box-shadow: none;           /* No shadow for transparent look */
+    text-align: center;
+    padding: clamp(15px, 3vw, 30px) clamp(10px, 2vw, 20px);
+    background: transparent;
+    border-radius: 15px;
+    box-shadow: none;
+    flex: 0 0 40%;              /* Fixed 40% width, don't grow or shrink */
+    max-width: 40%;             /* Maximum 40% width */
 }
 
 /* Main title (h1) styling */
@@ -656,25 +588,13 @@ body::before {
    Split layout: map on left, statistics on right
    ============================================ */
 
-.map-container {
-    display: flex;              /* Use flexbox for side-by-side layout */
-    gap: 15px;                  /* Space between map and statistics panel */
-    flex-wrap: wrap;            /* Allow stacking when space is tight */
-    height: 100%;               /* Take full height of parent container */
-    width: 100%;                /* Take full width of parent container */
-    min-width: 0;               /* Let children shrink without overflowing */
-    min-height: 0;
-}
+/* Removed .map-container - using Tailwind classes in HTML instead */
 
 /* Map visualization area */
 #mapArea {
-    flex: 2;                    /* Take 2 parts of available space (twice as wide as stats panel) */
     background: transparent;    /* Transparent to see stars */
     border-radius: 10px;        /* Rounded corners */
-    overflow: auto;             /* Show scrollbars if content is too large */
-    min-width: 0;               /* Allow shrinking on narrow screens */
     position: relative;         /* Position context for absolutely positioned children */
-    min-height: 0;
 }
 
 /* SVG element inside the map (the actual map graphic) */
@@ -690,21 +610,15 @@ body::before {
    ============================================ */
 
 .stats-panel {
-    flex: 1;                    /* Take 1 part of available space (half the width of map) */
     background: transparent;    /* Transparent to see stars */
     border-radius: 10px;        /* Rounded corners */
-    padding: 12px;              /* Space inside the panel */
-    overflow-y: auto;           /* Show vertical scrollbar if content is too tall */
-    border: 2px solid rgba(226, 232, 240, 0.2);  /* Semi-transparent border */
-    min-width: 0;               /* Allow shrinking on narrow screens */
-    min-height: 0;
 }
 
 /* h3 heading inside statistics panel */
 .stats-panel h3 {
     font-size: 0.95rem;         /* Slightly smaller than base font */
     font-weight: 700;           /* Bold text */
-    color: #e0e7ff;             /* Light purple-blue */
+    color: white;               /* White text */
     margin-bottom: 10px;        /* Space below heading */
     padding-bottom: 8px;        /* Space between heading and separator line */
     border-bottom: 2px solid rgba(226, 232, 240, 0.2);  /* Semi-transparent separator */
@@ -713,7 +627,7 @@ body::before {
 
 /* Loading message shown before data is available */
 .loading-stats {
-    color: #a5b4fc;             /* Light purple-blue text */
+    color: white;               /* White text */
     font-style: italic;         /* Italicized text */
     text-align: center;         /* Center text horizontally */
     padding: 20px;              /* Space around the text */
@@ -747,8 +661,8 @@ body::before {
     font-size: 0.9rem;          /* Slightly smaller than base font */
     font-weight: 600;           /* Semi-bold text */
     margin-bottom: 8px;         /* Space below country name */
-    color: #e0e7ff;             /* Light purple-blue */
-    text-shadow: 0 0 8px rgba(224, 231, 255, 0.3);  /* Subtle glow */
+    color: white;               /* White text */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);  /* Subtle glow */
 }
 
 /* Individual statistic row (label + value) */
@@ -767,13 +681,13 @@ body::before {
 
 /* Label part of statistic (e.g., "Population:") */
 .stat-label {
-    color: #a5b4fc;             /* Light purple-blue text */
+    color: white;               /* White text */
     font-weight: 500;           /* Medium font weight */
 }
 
 /* Value part of statistic (e.g., "67 million") */
 .stat-value {
-    color: #e0e7ff;             /* Light purple-blue text */
+    color: white;               /* White text */
     font-weight: 600;           /* Semi-bold for emphasis */
 }
 
@@ -792,8 +706,8 @@ body::before {
 .comparison-section h4 {
     font-size: 0.9rem;          /* Slightly smaller than base font */
     font-weight: 600;           /* Semi-bold text */
-    color: #e0e7ff;             /* Light purple-blue */
-    text-shadow: 0 0 8px rgba(224, 231, 255, 0.3);  /* Subtle glow */
+    color: white;               /* White text */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);  /* Subtle glow */
     margin-bottom: 8px;         /* Space below heading */
 }
 
@@ -807,7 +721,7 @@ body::before {
 /* Label for comparison bar (e.g., "Doses") */
 .comparison-label {
     font-size: 0.75rem;         /* Small text */
-    color: #a5b4fc;             /* Light purple-blue */
+    color: white;               /* White text */
     width: 80px;                /* Fixed width for alignment */
     flex-shrink: 0;             /* Don't shrink when space is tight */
 }
@@ -975,198 +889,83 @@ body::before {
 }
 
 /* ============================================
-   RESPONSIVE DESIGN - LARGE SCREENS
-   Layout adjustments for screens between 1000px and 1400px
+   RESPONSIVE DESIGN - TABLET/iPAD (768px - 1199px)
+   Layout adjustments for tablets in both orientations
    ============================================ */
 
-@media (max-width: 1400px) {
-    /* Stack visualizations vertically instead of horizontally */
-    .content-container {
-        flex-direction: column;  /* Change from row to column layout */
+/* Tablet/iPad - Stack header on top, then 2x2 below */
+@media (max-width: 1279px) {
+    #dashboardHeader {
+        flex: 1 1 auto;         /* Reset to auto width */
+        max-width: 100%;        /* Full width on tablet */
     }
-    
-    /* Move map to the top */
-    #mapSection {
-        order: 1;                /* Display first */
-        min-height: 600px;       /* Ensure map has good height */
-    }
-    
-    /* Side panels become horizontal row */
-    .side-panels {
-        order: 2;                /* Display after map */
-        flex-direction: row;     /* Arrange bar chart and time series side-by-side */
-        min-width: 100%;         /* Take full width */
-    }
-    
-    /* Kernel plot at the bottom */
+
+    #barSection,
+    #tsSection,
+    #mapSection,
     #kernelSection {
-        order: 3;                /* Display last */
-    }
-}
-
-/* ============================================
-   RESPONSIVE DESIGN - MEDIUM SCREENS
-   Layout adjustments for screens up to 900px wide
-   ============================================ */
-
-@media (max-width: 1000px) {
-    /* Stack side panels vertically */
-    .side-panels {
-        flex-direction: column;  /* Stack bar chart and time series vertically */
-    }
-    
-    /* Ensure minimum height for readability */
-    #barSection, #tsSection {
-        min-height: 400px;       /* Minimum height for each visualization */
-    }
-
-    /* Let the map/stat layout stack vertically so it can shrink on small screens */
-    .map-container {
-        flex-direction: column;
-    }
-
-    /* Remove rigid min-widths when stacked */
-    #mapArea,
-    .stats-panel {
-        min-width: 0;
-        width: 100%;
-    }
-
-    /* Allow map section to grow naturally instead of clipping at 50vh */
-    #mapSection {
+        min-height: 400px;
         max-height: none;
     }
 
-    /* Give the map and stats sensible heights when stacked */
-    #mapArea {
+    #heatmapSection {
+        height: 350px;
+    }
+}
+
+
+
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE PHONES (320px - 767px)
+   Optimized layout for mobile devices
+   ============================================ */
+
+/* Mobile - Full vertical stack */
+@media (max-width: 767px) {
+    #wrapper {
+        padding: 0 10px;
+    }
+
+    #barSection,
+    #tsSection,
+    #mapSection,
+    #kernelSection {
         min-height: 320px;
     }
 
-    .stats-panel {
-        min-height: 200px;
-    }
-
-    .map-column {
-        min-width: auto;
-        width: 100%;
-    }
-
-    /* Remove height caps that clip plots on small screens */
-    #mapSection,
-    #barSection,
-    #tsSection,
-    #kernelSection {
-        max-height: none;
-        overflow: visible;
-    }
-}
-
-/* ============================================
-   RESPONSIVE DESIGN - SMALL SCREENS (Mobile)
-   Layout adjustments for screens up to 768px wide
-   ============================================ */
-
-@media (max-width: 768px) {
-    /* Force vertical stacking on mobile */
-    .content-container {
-        flex-direction: column;  /* Stack everything vertically */
-        flex-wrap: nowrap;
-        gap: 15px;
-    }
-    
-    /* Make all panels take full width */
-    .side-panels,
-    .map-column {
-        min-width: 100%;
-        width: 100%;
-        flex: 1 1 100%;
-    }
-    
-    /* Stack bar and time series vertically on mobile */
-    .side-panels {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    /* Reduce padding and spacing on small screens */
-    #wrapper {
-        padding: 10px;           /* Less padding around wrapper */
-        gap: 0px;                /* No gap between elements */
-    }
-    
-    /* Smaller header on mobile */
-    #dashboardHeader {
-        padding: 15px 10px;      /* Less padding */
-    }
-    
-    /* Smaller title on mobile */
-    #dashboardHeader h1 {
-        font-size: clamp(1.4rem, 6vw, 1.75rem); /* Responsive mobile title */
-    }
-    
-    /* Smaller subtitle on mobile */
-    #dashboardHeader .subtitle {
-        font-size: clamp(0.85rem, 3vw, 1rem);
-    }
-    
-    /* Smaller panel headers on mobile */
-    .panel-header h2 {
-        font-size: 1.1rem;       /* Smaller than desktop */
-    }
-    
-    /* Ensure all plots have good height on mobile */
-    #mapSection,
-    #barSection,
-    #tsSection,
-    #kernelSection {
-        min-height: 350px;       /* Consistent height for all plots */
-        max-height: none;        /* Remove height caps */
-    }
-    
-    /* Stack map container vertically */
-    .map-container {
-        flex-direction: column;
-    }
-    
-    #mapArea {
-        min-height: 300px;
-        width: 100%;
-    }
-    
-    .stats-panel {
-        min-height: 200px;
-        width: 100%;
-        max-height: 300px;
-    }
-    
-    /* Adjust heatmap for mobile */
     #heatmapSection {
-        height: clamp(300px, 40vh, 400px);
-        padding: 10px;
+        height: 300px;
     }
-    
-    /* Smaller control elements */
-    .global-controls,
-    .overlay-controls {
+
+    /* Removed conflicting map layout rules - using Tailwind classes instead */
+
+    #dashboardHeader h1 {
+        font-size: 1.5rem;
+    }
+
+    #dashboardHeader .subtitle {
+        font-size: 0.9rem;
+    }
+
+    .global-controls {
+        flex-direction: column;
         gap: 10px;
-        padding: 10px;
     }
-    
+
     .control-group {
         width: 100%;
-        justify-content: space-between;
     }
-    
-    .control-group label {
-        font-size: 0.85rem;
+
+    .control-group select {
+        width: 100%;
     }
-    
-    .control-group select,
-    #globalCountry1Select,
-    #globalCountry2Select {
-        font-size: 14px;
-        min-width: 140px;
-        max-width: 200px;
+
+    .viz-panel {
+        padding: 12px;
+    }
+
+    .viz-panel h2 {
+        font-size: 1.1rem !important;
     }
 }
 
@@ -1247,12 +1046,7 @@ body::before {
         font-size: 13px;
     }
     
-    /* Smaller map stats panel */
-    .stats-panel {
-        min-height: 150px;
-        max-height: 250px;
-        padding: 8px;
-    }
+    /* Removed conflicting stats-panel rules - using Tailwind classes instead */
     
     /* Reduce viz panel padding */
     .viz-panel {
@@ -1275,13 +1069,13 @@ body::before {
 }
 
 #heatmapSection {
-    margin-top: auto;           /* Push to bottom */
-    background: transparent;    /* Transparent to see stars */
-    border-radius: 10px;        /* Match kernel plot corners */
+    margin-top: auto;
+    background: transparent;
+    border-radius: 10px;
     padding: 15px;
     width: 100%;
-    height: clamp(350px, 45vh, 500px); /* Responsive height with min/max */
-    overflow: hidden;           /* Hide overflow to prevent scrollbars */
+    height: clamp(350px, 45vh, 500px);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -1303,10 +1097,8 @@ body::before {
     align-items: center;
     justify-content: center;
     position: relative;
-    min-height: 0;              /* Allow flexbox to shrink */
-    overflow: hidden;           /* Prevent internal scrolling */
-} 
     min-height: 0;
+    overflow: hidden;
 }
 
 #heatmap svg {
