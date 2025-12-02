@@ -6,25 +6,27 @@ import { createMapViz, highlightCountries, addCovidOverlay, showCovidStats, setF
 import { plotTwoCountryComparison } from './kernelPlot.js?v=3';
 import { plotVaccinationHeatmap } from './heatmap.js?v=6';
 import { drawFranceMap } from './map_france.js?v=38';
+import { createStackedBarChart, createCumulativeLineChart, createEUMedianBarChart, createEUMedianLineChart } from './age_group_viz.js?v=17';
 
-console.log("🚀 Dashboard controller initialized");
-
-// Set flag to prevent auto-initialization in modules
 window.__dashboardMode = true;
 
-// Store data globally for event handlers
+function parseYearWeek(yearWeek) {
+    const [year, week] = yearWeek.split('-W');
+    const date = new Date(year, 0, 1 + (week - 1) * 7);
+    return date;
+}
+
 let globalVaccinData = null;
+let isAgeGroupMode = false; 
 
 // ============================================
 // CONFIGURATION
 // ============================================
 
 const config = {
-    // Default parameters
     DEFAULT_COUNTRY: 'FR',  
     DEFAULT_YEAR: 2020,
     
-    // Countries to display in time series (top European countries by population)
     TS_COUNTRIES: ['FR', 'DE', 'IT', 'ES', 'PL', 'RO', 'NL', 'BE', 'CZ', 'PT'],
     
     DOSE_TYPES: ['FirstDose', 'SecondDose', 'DoseAdditional1']
@@ -34,85 +36,57 @@ const config = {
 // MAP VISUALIZATION MODULE
 // ============================================
 
-// Function to create France statistics summary
 function createFranceStatistics() {
     console.log("📊 Creating France statistics summary...");
     
-    // Create statistics container in the bar section
-    const barSection = document.getElementById('barSection');
-    console.log("📊 barSection element:", barSection);
-    console.log("📊 barSection current display:", barSection ? barSection.style.display : 'N/A');
-    
-    barSection.innerHTML = '';
-    barSection.style.display = 'block';
-    
-    console.log("📊 barSection display set to:", barSection.style.display);
+    const barSectionDefault = document.getElementById('barSectionDefault');
+
+    barSectionDefault.innerHTML = '';
+    barSectionDefault.style.display = 'block';
     
     const statsContainer = document.createElement('div');
     statsContainer.id = 'franceStatsContainer';
     statsContainer.style.cssText = `
         width: 100%;
-        height: 100%;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-        padding: 20px;
+        max-width: 280px;
+        margin: 10px auto;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
     `;
     
     statsContainer.innerHTML = `
-        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500;">📍 Regions Analyzed</div>
-            <div id="statRegions" style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 5px;">13</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Metropolitan France</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(240, 147, 251, 0.3);">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500;">👥 Gender Gap</div>
-            <div id="statGenderGap" style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 5px;">...</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Female vs Male coverage</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500;">💉 Total Vaccinations</div>
-            <div id="statTotalVaccinations" style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 5px;">...</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Complete doses administered</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(250, 112, 154, 0.3);">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500;">🎯 Avg Coverage</div>
-            <div id="statAvgCoverage" style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 5px;">...</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.7);">All regions combined</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(168, 237, 234, 0.3);">
-            <div style="font-size: 14px; color: rgba(50,50,50,0.9); margin-bottom: 8px; font-weight: 500;">👴 Elderly Coverage</div>
-            <div id="statElderlyCoverage" style="font-size: 32px; font-weight: bold; color: #333; margin-bottom: 5px;">...</div>
-            <div style="font-size: 11px; color: rgba(50,50,50,0.7);">Ages 65+ complete vaccination</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 236, 210, 0.3);">
-            <div style="font-size: 14px; color: rgba(50,50,50,0.9); margin-bottom: 8px; font-weight: 500;">👶 Youth Coverage</div>
-            <div id="statYouthCoverage" style="font-size: 32px; font-weight: bold; color: #333; margin-bottom: 5px;">...</div>
-            <div style="font-size: 11px; color: rgba(50,50,50,0.7);">Ages 18-39 complete vaccination</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 154, 158, 0.3);">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500;">🔄 Booster Rate</div>
-            <div id="statBoosterRate" style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 5px;">...</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Population with 1st booster</div>
-        </div>
-        
-        <div class="stat-card" style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(251, 194, 235, 0.3);">
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500;">🏆 Top Region</div>
-            <div id="statTopRegion" style="font-size: 20px; font-weight: bold; color: #fff; margin-bottom: 5px;">...</div>
-            <div id="statTopRegionCov" style="font-size: 11px; color: rgba(255,255,255,0.7);">Highest coverage rate</div>
+        <div style="text-align: center; color: white;">
+            <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px; color: rgba(255,255,255,0.95);">
+                🇫🇷 France Overview
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left;">
+                <div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">📍 Regions</div>
+                    <div id="statRegions" style="font-size: 24px; font-weight: bold; color: #fff;">13</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">💉 Total Doses</div>
+                    <div id="statTotalVaccinations" style="font-size: 24px; font-weight: bold; color: #fff;">...</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">🎯 Coverage</div>
+                    <div id="statAvgCoverage" style="font-size: 24px; font-weight: bold; color: #fff;">...</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">🔄 Booster</div>
+                    <div id="statBoosterRate" style="font-size: 24px; font-weight: bold; color: #fff;">...</div>
+                </div>
+            </div>
         </div>
     `;
     
-    barSection.appendChild(statsContainer);
-    
-    console.log("📊 Stats container appended to barSection");
-    console.log("📊 barSection children:", barSection.children.length);
+    barSectionDefault.appendChild(statsContainer);
     
     // Load the statistics calculation script
     if (!window.franceStatsLoaded) {
@@ -156,13 +130,13 @@ function loadAgeVisualization() {
     `;
     
     ageContainer.innerHTML = `
-        <div class="chart-card" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="chart-card" style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
             <div class="card-header" style="margin-bottom: 10px; flex-shrink: 0;">
                 <h2 style="font-size: 1.1rem; color: #fff; margin-bottom: 3px;">📈 Vaccination by Age Group</h2>
                 <p style="font-size: 0.75rem; color: #c4b5fd;">Booster progression across age groups</p>
             </div>
             
-            <div id="stackedAreaChart" class="chart-container" style="width: 100%; height: 450px;"></div>
+            <div id="stackedAreaChart" class="chart-container" style="width: 100%; height: 350px; overflow: hidden;"></div>
         </div>
     `;
     
@@ -181,20 +155,24 @@ function loadAgeVisualization() {
         };
         document.body.appendChild(script);
     } else {
-        // Script already loaded, just initialize
+
         if (window.initDashboard) {
             window.initDashboard();
         }
     }
 }
 
-// Function to load gender vaccination visualization
+
 function loadGenderVisualization() {
     console.log("👥 Loading gender vaccination visualization...");
     
-    // Create gender pyramid container in the kernel section
-    const kernelSection = document.getElementById('kernelSection');
-    kernelSection.innerHTML = '';
+    // Place gender pyramid in tsSectionDefault (where tsPlot resides)
+    const tsSectionDefault = document.getElementById('tsSectionDefault');
+    tsSectionDefault.innerHTML = '';
+    tsSectionDefault.style.display = 'block';
+    tsSectionDefault.style.height = 'auto';
+    tsSectionDefault.style.maxHeight = '400px';
+    tsSectionDefault.style.marginTop = '-20px';
     
     const genderContainer = document.createElement('div');
     genderContainer.id = 'genderPyramidContainer';
@@ -233,11 +211,11 @@ function loadGenderVisualization() {
                 </button>
             </div>
             
-            <div id="pyramidChart" class="chart-container" style="width: 100%; flex: 1; min-height: 0; overflow: auto;"></div>
+            <div id="pyramidChart" class="chart-container" style="width: 100%; flex: 1; min-height: 0; overflow: hidden;"></div>
         </div>
     `;
     
-    kernelSection.appendChild(genderContainer);
+    tsSectionDefault.appendChild(genderContainer);
     
     // Load the gender_vaccin.js script dynamically (only if not already loaded)
     if (!window.genderVizLoaded) {
@@ -273,7 +251,7 @@ function loadGenderVisualization() {
         };
         document.body.appendChild(script);
     } else {
-        // Script already loaded, just initialize
+        
         if (window.initDashboard) {
             window.initDashboard();
         }
@@ -291,29 +269,42 @@ function createMapVisualization(vaccinData) {
         // Remove any existing tooltips from Europe map
         d3.selectAll('.map-tooltip').remove();
         
-        // Hide ts sections and control elements, keep bar for statistics
+        // Hide sections and control elements, keep bar for statistics
         const barSection = document.getElementById('barSection');
         const tsSection = document.getElementById('tsSection');
+        const barSectionDefault = document.getElementById('barSectionDefault');
+        const tsSectionDefault = document.getElementById('tsSectionDefault');
         const mapStats = document.getElementById('mapStats');
         const globalControls = document.querySelector('.global-controls');
         const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
+        const kernelSection = document.getElementById('kernelSection');
         
-        // Keep bar section visible for statistics display
-        if (barSection) barSection.style.display = 'block';
+        // Hide barPlot.js and tsPlot.js sections
+        if (barSectionDefault) barSectionDefault.style.display = 'none';
+        if (tsSectionDefault) tsSectionDefault.style.display = 'none';
+        
+        // Hide header sections (used for Age Group mode)
+        if (barSection) barSection.style.display = 'none';
         if (tsSection) tsSection.style.display = 'none';
+        
         if (mapStats) mapStats.style.display = 'none';
         if (globalControls) globalControls.style.display = 'none';
         if (toggleAnalysisBtn) toggleAnalysisBtn.parentElement.style.display = 'none';
+        if (kernelSection) kernelSection.style.display = 'none'; 
         
-        // Ensure kernel and heatmap sections are visible for France visualizations
-        const kernelSection = document.getElementById('kernelSection');
+        // Ensure heatmap section is visible for France age visualization
         const heatmapSection = document.getElementById('heatmapSection');
-        if (kernelSection) kernelSection.style.display = 'block';
         if (heatmapSection) heatmapSection.style.display = 'block';
         
         // Clear the map area and create France map
         const mapArea = document.getElementById('mapArea');
         mapArea.innerHTML = '';
+        
+        // Adjust map section height for France to fit without scrolling
+        const mapSection = document.getElementById('mapSection');
+        if (mapSection) {
+            mapSection.style.height = '580px';
+        }
         
         // Create container for France map
         const franceMapContainer = document.createElement('div');
@@ -335,12 +326,52 @@ function createMapVisualization(vaccinData) {
         // Load age-based vaccination visualization
         loadAgeVisualization();
         
+        // Draw France map
+        console.log('🗺️ Drawing France map in container:', franceMapContainer);
+        drawFranceMap('#franceMapContainer');
+        console.log('✅ France map drawing initiated');
+        
+        // Add "Back to Dashboard" button
+        if (mapSection && !document.getElementById('backToDashboardBtn')) {
+            const backBtn = document.createElement('button');
+            backBtn.id = 'backToDashboardBtn';
+            backBtn.innerHTML = '← Back to Dashboard';
+            backBtn.style.cssText = `
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                padding: 8px 16px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: 2px solid #a78bfa;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 14px;
+                cursor: pointer;
+                z-index: 1000;
+                transition: all 0.3s ease;
+            `;
+            
+            backBtn.addEventListener('mouseenter', () => {
+                backBtn.style.transform = 'translateY(-2px)';
+                backBtn.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.5)';
+            });
+            
+            backBtn.addEventListener('mouseleave', () => {
+                backBtn.style.transform = '';
+                backBtn.style.boxShadow = '';
+            });
+            
+            backBtn.addEventListener('click', returnToEurope);
+            
+            mapSection.style.position = 'relative';
+            mapSection.appendChild(backBtn);
+        }
+        
         // Function to return to Europe map
         const returnToEurope = () => {
             console.log("↩️ Returning to Europe map...");
-            document.removeEventListener('click', handleOutsideClick, true);
             
-            // Remove any tooltips from France map
             d3.selectAll('.map-tooltip').remove();
             
             // Show all visualization sections and controls again
@@ -353,7 +384,10 @@ function createMapVisualization(vaccinData) {
             const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
             
             if (barSection) barSection.style.display = '';
-            if (tsSection) tsSection.style.display = '';
+            if (tsSection) {
+                tsSection.style.display = '';
+                tsSection.innerHTML = '';
+            }
             if (heatmapSection) {
                 heatmapSection.style.display = '';
                 // Clear heatmap section and restore it
@@ -367,6 +401,12 @@ function createMapVisualization(vaccinData) {
             }
             if (globalControls) globalControls.style.display = '';
             if (toggleAnalysisBtn) toggleAnalysisBtn.parentElement.style.display = '';
+            
+            // Remove Back to Dashboard button
+            const backBtn = document.getElementById('backToDashboardBtn');
+            if (backBtn) {
+                backBtn.remove();
+            }
             
             // Clear France statistics container
             const franceStatsContainer = document.getElementById('franceStatsContainer');
@@ -417,93 +457,6 @@ function createMapVisualization(vaccinData) {
             plotTwoCountryComparison(globalVaccinData, country1, country2);
             plotVaccinationHeatmap(globalVaccinData, country1, country2, 2021, 2022, doseType);
         };
-        
-        // Handler for clicks outside - use capture phase
-        const handleOutsideClick = (e) => {
-            const target = e.target;
-            console.log("Click detected on:", target.tagName, target.id, target.className);
-            
-            // Don't close if clicking on vaccine buttons in gender pyramid
-            if (target.closest('.vaccine-selector') || 
-                target.classList?.contains('vaccine-btn') ||
-                target.closest('.vaccine-btn')) {
-                console.log("Click on vaccine selector buttons - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside gender pyramid chart
-            if (target.closest('#pyramidChart') || target.id === 'pyramidChart') {
-                console.log("Click on gender pyramid chart - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside the gender pyramid container
-            if (target.closest('#genderPyramidContainer') || target.id === 'genderPyramidContainer') {
-                console.log("Click on gender pyramid container - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside age stacked area chart
-            if (target.closest('#stackedAreaChart') || target.id === 'stackedAreaChart') {
-                console.log("Click on age stacked area chart - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside the age stacked container
-            if (target.closest('#ageStackedContainer') || target.id === 'ageStackedContainer') {
-                console.log("Click on age stacked container - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside heatmap section (contains age viz)
-            const heatmapSection = document.getElementById('heatmapSection');
-            if (heatmapSection && heatmapSection.contains(target)) {
-                console.log("Click inside heatmap section - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking on France map SVG or its elements
-            const franceMapContainer = document.getElementById('franceMapContainer');
-            if (franceMapContainer && franceMapContainer.contains(target)) {
-                console.log("Click inside France map container - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking on vaccine control buttons (France map)
-            if (target.closest('.vaccine-controls') || 
-                target.classList?.contains('vaccine-type-button') ||
-                target.classList?.contains('vaccine-controls')) {
-                console.log("Click on France map vaccine controls - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside the kernel section (contains gender pyramid)
-            const kernelSection = document.getElementById('kernelSection');
-            if (kernelSection && kernelSection.contains(target)) {
-                console.log("Click inside kernel section - ignoring");
-                return;
-            }
-            
-            // Don't close if clicking inside map section
-            const mapSection = document.getElementById('mapSection');
-            if (mapSection && mapSection.contains(target)) {
-                console.log("Click inside map section - ignoring");
-                return;
-            }
-            
-            // Close for any other click (outside both visualizations)
-            console.log("Click outside all France visualizations - closing France map");
-            returnToEurope();
-        };
-        
-        // Draw France map first
-        drawFranceMap('#franceMapContainer');
-        
-        // Add click listener after a short delay to prevent immediate closing
-        setTimeout(() => {
-            console.log("🎯 Click-outside listener activated");
-            document.addEventListener('click', handleOutsideClick, true);
-        }, 200);
     };
     
     // Set up click handler for France to show detailed map
@@ -562,6 +515,74 @@ function initializeGlobalControls() {
     
     // Global update function for all visualizations
     const updateAllCharts = () => {
+        // If in age group mode, update age group visualizations
+        if (isAgeGroupMode) {
+            console.log('🔄 Age group mode - updating visualizations for country change');
+            const country1 = select1.value;
+            // Update map highlighting
+            highlightCountries(country1, country1);
+            
+            // Reload age group data for new country
+            d3.csv('data/vaccin.csv').then(rawData => {
+                const countryData = rawData
+                    .filter(d => 
+                        d.ReportingCountry === country1 && 
+                        d.TargetGroup && 
+                        d.TargetGroup.startsWith('Age') &&
+                        d.TargetGroup !== 'AgeUNK' &&
+                        d.TargetGroup !== 'Age<18' &&
+                        d.TargetGroup !== 'ALL'
+                    )
+                    .map(d => ({
+                        ...d,
+                        FirstDose: parseFloat(d.FirstDose) || 0,
+                        SecondDose: parseFloat(d.SecondDose) || 0,
+                        DoseAdditional1: parseFloat(d.DoseAdditional1) || 0,
+                        DoseAdditional2: parseFloat(d.DoseAdditional2) || 0,
+                        DoseAdditional3: parseFloat(d.DoseAdditional3) || 0,
+                        DoseAdditional4: parseFloat(d.DoseAdditional4) || 0,
+                        DoseAdditional5: parseFloat(d.DoseAdditional5) || 0,
+                        date: d.YearWeekISO ? parseYearWeek(d.YearWeekISO) : null
+                    }));
+                
+                const barSection = document.getElementById('barSection');
+                const tsSection = document.getElementById('tsSection');
+                
+                // Update grouped bar chart in tsSection (at top - showing cumulative uptake)
+                if (tsSection) {
+                    tsSection.style.height = 'auto';
+                    tsSection.style.minHeight = '950px';
+                    tsSection.style.overflow = 'visible';
+                    tsSection.innerHTML = `
+                        <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">
+                            Cumulative Vaccine Uptake by Age Group - ${country1}
+                        </h2>
+                        <div id="ageStackedBarChart" style="width: 100%; height: 900px;"></div>
+                    `;
+                    createStackedBarChart('#ageStackedBarChart', countryData);
+                }
+                
+                // Update cumulative line chart in tsSectionDefault (side panel)
+                const tsSectionDefault = document.getElementById('tsSectionDefault');
+                if (tsSectionDefault) {
+                    tsSectionDefault.style.display = 'block';
+                    tsSectionDefault.style.height = 'auto';
+                    tsSectionDefault.style.minHeight = '650px';
+                    tsSectionDefault.style.overflow = 'visible';
+                    tsSectionDefault.innerHTML = `
+                        <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">
+                            Cumulative Vaccination by Age Group - ${country1}
+                        </h2>
+                        <div id="ageCumulativeChart" style="width: 100%; height: 600px;"></div>
+                    `;
+                    createCumulativeLineChart('#ageCumulativeChart', countryData);
+                }
+                
+                console.log('✅ Age group visualizations updated for', country1);
+            });
+            return;
+        }
+        
         const country1 = select1.value;
         const country2 = select2.value;
         
@@ -591,22 +612,233 @@ function initializeGlobalControls() {
     // Initial highlighting
     highlightCountries('FR', 'IT');
     
+    // Create Age Group button
+    createAgeGroupButton();
+    
     console.log("✅ Global controls initialized");
 }
 
 // ============================================
-// BAR CHART VISUALIZATION MODULE
+// AGE GROUP BUTTON MODULE
 // ============================================
+
+function createAgeGroupButton() {
+    // Find the global controls container
+    const globalControls = document.querySelector('.global-controls');
+    if (!globalControls) {
+        console.warn('⚠️ Global controls container not found');
+        return;
+    }
+    
+    // Create Age Group button
+    const ageGroupBtn = document.createElement('button');
+    ageGroupBtn.id = 'ageGroupBtn';
+    ageGroupBtn.textContent = 'Age Group';
+    ageGroupBtn.style.cssText = `
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: 2px solid #a78bfa;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+    `;
+    
+    // Create Reset button (initially hidden)
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'resetDashboardBtn';
+    resetBtn.textContent = '↩️ Back to Dashboard';
+    resetBtn.style.cssText = `
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        color: white;
+        border: 2px solid #ff8787;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+        display: none;
+    `;
+    
+    // Add hover effects for Age Group button
+    ageGroupBtn.addEventListener('mouseenter', () => {
+        ageGroupBtn.style.transform = 'translateY(-2px)';
+        ageGroupBtn.style.boxShadow = '0 5px 20px rgba(167, 139, 250, 0.4)';
+    });
+    
+    ageGroupBtn.addEventListener('mouseleave', () => {
+        ageGroupBtn.style.transform = '';
+        ageGroupBtn.style.boxShadow = '';
+    });
+    
+    // Add click handler to hide all plots except map
+    ageGroupBtn.addEventListener('click', () => {
+        console.log('📊 Age Group button clicked - showing age group analysis');
+        
+        // Enable age group mode
+        isAgeGroupMode = true;
+        
+        // Hide sections
+        const barSection = document.getElementById('barSection');
+        const tsSection = document.getElementById('tsSection');
+        const heatmapSection = document.getElementById('heatmapSection');
+        const kernelSection = document.getElementById('kernelSection');
+        const barSectionDefault = document.getElementById('barSectionDefault');
+        
+        if (heatmapSection) heatmapSection.style.display = 'none';
+        if (kernelSection) kernelSection.style.display = 'none';
+        if (barSectionDefault) barSectionDefault.style.display = 'none';
+        
+        // Hide second country selector
+        const country2Container = document.getElementById('globalCountry2Select')?.parentElement;
+        if (country2Container) {
+            country2Container.style.display = 'none';
+        }
+        
+        // Hide "Vaccin & COVID analysis" button
+        const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
+        if (toggleAnalysisBtn) {
+            toggleAnalysisBtn.parentElement.style.display = 'none';
+        }
+        const mapStats = document.getElementById('mapStats');
+        if (mapStats) {
+            mapStats.style.display = 'none';
+        }
+        
+        // Make map section bigger in Age Group mode
+        const mapSection = document.getElementById('mapSection');
+        if (mapSection) {
+            mapSection.style.height = '1000px';
+        }
+        
+        const mapArea = document.getElementById('mapArea');
+        if (mapArea) {
+            mapArea.style.flex = '1';
+            mapArea.style.width = '100%';
+            console.log('✅ Map area expanded');
+        }
+        
+        // Update label for country1 selector to be more clear
+        const country1Label = document.querySelector('label[for="globalCountry1Select"]');
+        if (country1Label) {
+            country1Label.textContent = 'Select Country:';
+        }
+        
+        // Get selected country
+        const selectedCountry = document.getElementById('globalCountry1Select')?.value || 'FR';
+        
+        // Load and display age group visualizations
+        console.log('📊 Loading age group visualizations for', selectedCountry);
+        
+        // Load vaccination data
+        d3.csv('data/vaccin.csv').then(rawData => {
+            console.log('📂 Vaccination data loaded:', rawData.length, 'rows');
+            
+            // Clean and filter data for selected country and age groups
+            const countryData = rawData
+                .filter(d => 
+                    d.ReportingCountry === selectedCountry && 
+                    d.TargetGroup && 
+                    d.TargetGroup.startsWith('Age') &&
+                    d.TargetGroup !== 'AgeUNK' &&
+                    d.TargetGroup !== 'Age<18' &&
+                    d.TargetGroup !== 'ALL'
+                )
+                .map(d => ({
+                    ...d,
+                    FirstDose: parseFloat(d.FirstDose) || 0,
+                    SecondDose: parseFloat(d.SecondDose) || 0,
+                    DoseAdditional1: parseFloat(d.DoseAdditional1) || 0,
+                    DoseAdditional2: parseFloat(d.DoseAdditional2) || 0,
+                    DoseAdditional3: parseFloat(d.DoseAdditional3) || 0,
+                    DoseAdditional4: parseFloat(d.DoseAdditional4) || 0,
+                    DoseAdditional5: parseFloat(d.DoseAdditional5) || 0,
+                    date: d.YearWeekISO ? parseYearWeek(d.YearWeekISO) : null
+                }));
+            
+            console.log('✅ Filtered data:', countryData.length, 'rows for', selectedCountry);
+            
+            const barSection = document.getElementById('barSection');
+            const tsSection = document.getElementById('tsSection');
+            
+            // Setup tsSection for grouped bar chart showing cumulative vaccine uptake
+            if (tsSection) {
+                tsSection.style.display = 'block';
+                tsSection.style.height = 'auto';
+                tsSection.style.minHeight = '950px';
+                tsSection.style.overflow = 'visible';
+                tsSection.innerHTML = `
+                    <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">
+                        Cumulative Vaccine Uptake by Age Group - ${selectedCountry}
+                    </h2>
+                    <div id="ageStackedBarChart" style="width: 100%; height: 900px;"></div>
+                `;
+                
+                console.log('📊 About to create bar chart with', countryData.length, 'data points');
+                createStackedBarChart('#ageStackedBarChart', countryData);
+            }
+            
+            // Hide barSection in header (not used in age group mode)
+            if (barSection) {
+                barSection.style.display = 'none';
+            }
+            
+            // Put age group time series in the tsSectionDefault (side panel)
+            const tsSectionDefault = document.getElementById('tsSectionDefault');
+            if (tsSectionDefault) {
+                tsSectionDefault.style.display = 'block';
+                tsSectionDefault.style.height = 'auto';
+                tsSectionDefault.style.minHeight = '650px';
+                tsSectionDefault.style.overflow = 'visible';
+                tsSectionDefault.innerHTML = `
+                    <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">
+                        Cumulative Vaccination by Age Group - ${selectedCountry}
+                    </h2>
+                    <div id="ageCumulativeChart" style="width: 100%; height: 600px;"></div>
+                `;
+                
+                createCumulativeLineChart('#ageCumulativeChart', countryData);
+            }
+            
+            // Hide kernel section in age group mode
+            const kernelSection = document.getElementById('kernelSection');
+            if (kernelSection) {
+                kernelSection.style.display = 'none';
+            }
+            
+        }).catch(error => {
+            console.error('❌ Error loading vaccination data:', error);
+        });
+        
+        ageGroupBtn.style.display = 'none';
+        resetBtn.style.display = 'inline-block';
+        
+        console.log('✅ Age group mode activated');
+    });
+    
+    resetBtn.addEventListener('click', () => {
+        console.log('↩️ Reloading page to return to dashboard');
+        
+        window.location.reload();
+    });
+    
+
+    globalControls.appendChild(ageGroupBtn);
+    globalControls.appendChild(resetBtn);
+    
+    console.log('✅ Age Group button created');
+}
+
 
 function createBarChartVisualization(data) {
     console.log("📊 Creating bar chart okay...");
     
-    // Temporarily clear the container and set up for bar chart
     const container = d3.select('#barPlot');
-    container.html(''); // Clear any loading text
+    container.html(''); 
     
-    // Call the pyramid bar chart function from barPlot.js
-    // This function compares two countries side-by-side
     plotPyramidBarCharts(
         data,
         'FR',  // France (left side)
@@ -735,14 +967,10 @@ async function initializeDashboard() {
     }
 }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
-
 // Initialize dashboard when page loads
 window.addEventListener('load', initializeDashboard);
 
-// Handle window resize for responsive layout
+
 let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);

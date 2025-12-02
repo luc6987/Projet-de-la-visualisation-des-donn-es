@@ -399,17 +399,11 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
     });
 }
 
-// ============================================
-// MAIN EXECUTION & EVENT HANDLING
-// ============================================
 
 // Global variable to store loaded vaccination data
 let globalData = null;
 
-/**
- * Update chart when checkbox or dropdown selections change
- * Reads checked countries from checkboxes and selected dose type
- */
+
 function updateChart() {
     // Get selected countries from checkboxes
     const checkboxes = document.querySelectorAll('#countryCheckboxes input[type="checkbox"]:checked');

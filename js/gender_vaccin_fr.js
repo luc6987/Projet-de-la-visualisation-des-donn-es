@@ -54,7 +54,7 @@ function createPyramidChart(vaccineType = 'complete') {
     
     const containerRect = container.node().getBoundingClientRect();
     const width = containerRect.width;
-    const height = Math.max(450, containerRect.height || 500);
+    const height = 300;
     const margin = { top: 40, right: 60, bottom: 40, left: 150 };
     
     const svg = container.append('svg')

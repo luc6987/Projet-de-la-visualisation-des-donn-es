@@ -9,7 +9,7 @@
     <title>COVID-19 Vaccination Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/map.css?v=22">
-    <link rel="stylesheet" href="css/index_vaccin.css?v=24">
+    <link rel="stylesheet" href="css/index_vaccin.css?v=25">
 </head>
 
 <body>
@@ -55,18 +55,30 @@
                 <h3 class="heatmap-title text-sm sm:text-base lg:text-lg font-semibold text-white mb-2 text-center">Vaccination by Age Group (Quarterly)</h3>
                 <div id="heatmap" role="img" aria-label="Heatmap showing vaccination doses by age group and quarter" class="w-full flex-1 flex items-center justify-center overflow-hidden"></div>
             </section>
+
+            <!-- Time Series Visualization - In Header for Age Group Mode -->
+            <section id="tsSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Time series visualization" style="display: none;">
+                <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">Age Group Time Series</h2>
+                <div id="tsPlotAgeGroup" role="img" aria-label="Time series chart showing cumulative vaccination uptake" class="flex-1 overflow-hidden"></div>
+            </section>
+
+            <!-- Bar Section - In Header for Age Group Mode -->
+            <section id="barSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Vaccination bar chart by year" style="display: none;">
+                <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">Age Group Bar Chart</h2>
+                <div id="barPlotAgeGroup" role="img" aria-label="Bar chart showing vaccination doses by year for selected countries" class="flex-1 overflow-hidden"></div>
+            </section>
         </header>
 
         <div class="content-container flex flex-col xl:flex-row flex-wrap gap-4 sm:gap-5 flex-1 w-full overflow-x-hidden" role="region" aria-label="Visualization panels">
             
             <div class="side-panels flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="complementary" aria-label="Statistical charts">
-                <section id="barSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Vaccination bar chart by year">
+                <section id="barSectionDefault" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Vaccination bar chart by year">
                     <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">Vaccination Doses by Year (2020-2023)</h2>
                     <div id="barPlot" role="img" aria-label="Bar chart showing vaccination doses by year for selected countries" class="flex-1 overflow-hidden"></div>
                 </section>
 
                 <!-- Time Series Visualization -->
-                <section id="tsSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Time series visualization">
+                <section id="tsSectionDefault" class="viz-panel p-4 sm:p-5 flex flex-col h-[320px] sm:h-[400px] xl:h-[50vh]" aria-label="Time series visualization">
                     <div class="controls-container flex items-center gap-2 mb-3 p-2 sm:p-3 bg-slate-900/50 rounded-lg border border-purple-500/30">
                         <label for="doseTypeSelect" class="text-sm sm:text-base font-semibold text-white">Dose Type:</label>
                         <select id="doseTypeSelect" aria-label="Select dose type for time series" class="flex-1 px-2 sm:px-3 py-1 sm:py-2 border-2 border-slate-400/30 rounded-md bg-white/10 text-white text-sm sm:text-base cursor-pointer">
@@ -80,9 +92,7 @@
             </div>
 
 
-            <div class="map-column flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="region" aria-label="Geographic visualizations">
-
-                <!-- Geographic Map Section - Split into Map + Stats -->
+            <div class="map-column flex flex-col xl:flex-1 gap-4 sm:gap-5 w-full xl:w-auto" role="region" aria-label="Geographic visualizations">                <!-- Geographic Map Section - Split into Map + Stats -->
                 <section id="mapSection" class="viz-panel p-4 sm:p-5 flex flex-col h-[400px] sm:h-[450px] xl:h-[50vh]" aria-label="Geographic map of Europe">
                     <h2 class="mb-4 text-white text-lg sm:text-xl lg:text-2xl font-semibold">European Vaccination Coverage Map</h2>
                     <div class="map-container flex flex-col md:flex-row gap-3 sm:gap-4 flex-1 overflow-hidden min-h-0 min-w-0">
@@ -123,7 +133,7 @@
     </script>
     
     <script type="text/javascript" src="./js/d3.v7.min.js"></script>
-    <script type="module" src="js/main_vaccin.js?v=70"></script>
+    <script type="module" src="js/main_vaccin.js?v=95"></script>
 
 </body>
 </html>

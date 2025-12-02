@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age Group Vaccination Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a0015 0%, #1a0a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(20, 0, 40, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #c4b5fd;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(20, 0, 40, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
+        .controls label {
+            color: #ff7b8a;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .controls select {
+            padding: 10px 20px;
+            background: rgba(10, 0, 21, 0.8);
+            color: #fff;
+            border: 2px solid #a78bfa;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .controls select:hover {
+            border-color: #c4b5fd;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(167, 139, 250, 0.4);
+        }
+
+        .controls select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        #dashboardContainer {
+            min-height: 600px;
+            width: 100%;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+            font-size: 1.5rem;
+            color: #a78bfa;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #c4b5fd;
+            font-size: 0.9rem;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(167, 139, 250, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💉 COVID-19 Vaccination Analysis by Age Group</h1>
+            <p class="subtitle">Comprehensive age-based vaccination statistics and trends</p>
+        </header>
+
+        <div class="controls">
+            <label for="countrySelect">Select Country:</label>
+            <select id="countrySelect">
+                <option value="AT">Austria</option>
+                <option value="BE">Belgium</option>
+                <option value="BG">Bulgaria</option>
+                <option value="CY">Cyprus</option>
+                <option value="CZ">Czechia</option>
+                <option value="DE">Germany</option>
+                <option value="DK">Denmark</option>
+                <option value="EE">Estonia</option>
+                <option value="EL">Greece</option>
+                <option value="ES">Spain</option>
+                <option value="FI">Finland</option>
+                <option value="FR" selected>France</option>
+                <option value="HR">Croatia</option>
+                <option value="HU">Hungary</option>
+                <option value="IE">Ireland</option>
+                <option value="IS">Iceland</option>
+                <option value="IT">Italy</option>
+                <option value="LI">Liechtenstein</option>
+                <option value="LT">Lithuania</option>
+                <option value="LU">Luxembourg</option>
+                <option value="LV">Latvia</option>
+                <option value="MT">Malta</option>
+                <option value="NL">Netherlands</option>
+                <option value="NO">Norway</option>
+                <option value="PL">Poland</option>
+                <option value="PT">Portugal</option>
+                <option value="RO">Romania</option>
+                <option value="SE">Sweden</option>
+                <option value="SI">Slovenia</option>
+                <option value="SK">Slovakia</option>
+            </select>
+        </div>
+
+        <div id="dashboardContainer">
+            <div class="loading">Loading vaccination data</div>
+        </div>
+
+        <footer>
+            <p>Data Source: European Centre for Disease Prevention and Control (ECDC)</p>
+            <a href="index_vaccin.html" class="back-btn">← Back to Main Dashboard</a>
+        </footer>
+    </div>
+
+    <!-- D3.js Library -->
+    <script src="./js/d3.v7.min.js"></script>
+    
+    <!-- Age Group Visualization Module -->
+    <script type="module">
+        import { createAgeGroupDashboard } from './js/age_group_viz.js';
+
+        console.log("🚀 Age Group Dashboard Page Initialized");
+
+        // Get country selector
+        const countrySelect = document.getElementById('countrySelect');
+        
+        // Load dashboard for selected country
+        function loadDashboard() {
+            const selectedCountry = countrySelect.value;
+            console.log(`📊 Loading dashboard for ${selectedCountry}...`);
+            
+            // Clear container
+            const container = document.getElementById('dashboardContainer');
+            container.innerHTML = '<div class="loading">Loading vaccination data</div>';
+            
+            // Create dashboard
+            createAgeGroupDashboard('#dashboardContainer', selectedCountry);
+        }
+
+        // Add event listener for country change
+        countrySelect.addEventListener('change', loadDashboard);
+
+        // Load initial dashboard (France by default)
+        window.addEventListener('load', () => {
+            setTimeout(loadDashboard, 100);
+        });
+    </script>
+</body>
+</html>
