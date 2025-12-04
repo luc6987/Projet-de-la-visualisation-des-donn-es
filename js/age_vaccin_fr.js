@@ -1,7 +1,5 @@
-// Age-Based Vaccination Dashboard
-// Insightful visualizations for age group analysis
 
-// Check if already loaded to prevent redeclaration
+
 if (!window.ageVizInitialized) {
     window.ageVizInitialized = true;
 
@@ -34,6 +32,7 @@ const ageGroupLabels = {
 const overseasRegions = ['01', '02', '03', '04', '06', '07', '08'];
 let ageGlobalData = [];
 let ageSelectedRegion = '11';
+let currentSelectedDepartement = 'all'; 
 
 // Color scales
 const coverageColorScale = d3.scaleSequential()
@@ -79,27 +78,33 @@ async function loadData() {
 
 
 
-// 5. STACKED AREA CHART: Booster Progression
-function createStackedAreaChart() {
+// 5. STACKED AREA CHART: Booster Progression by Age Group
+function createStackedAreaChart(selectedDepartement = 'all') {
     const container = d3.select('#stackedAreaChart');
     container.html('');
     
-    const margin = { top: 60, right: 150, bottom: 80, left: 80 };
+    const margin = { top: 60, right: 100, bottom: 100, left: 50 };
     const containerRect = container.node().getBoundingClientRect();
     const width = containerRect.width;
-    const height = containerRect.height || 450;
+    const height = containerRect.height+70;
     
     const svg = container.append('svg')
-        .attr('width', width)
-        .attr('height', height);
+        .attr('width', width+50)
+        .attr('height', height+50)
+        .style('background', 'transparent');
     
     const g = svg.append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
     
+    // Filter data by selected département
+    const filteredData = selectedDepartement === 'all' 
+        ? ageGlobalData 
+        : ageGlobalData.filter(d => d.region === selectedDepartement);
+    
     // Aggregate by age group
     const ageGroups = Object.keys(ageGroupLabels).filter(k => k !== '0');
     const aggregated = ageGroups.map(age => {
-        const ageData = ageGlobalData.filter(d => d.ageGroup === age);
+        const ageData = filteredData.filter(d => d.ageGroup === age);
         return {
             ageGroup: age,
             ageLabel: ageGroupLabels[age].split(' ')[0],
@@ -115,71 +120,94 @@ function createStackedAreaChart() {
     const stack = d3.stack().keys(keys);
     const series = stack(aggregated);
     
-    // Scales
+    const totalVaccinations = d3.sum(aggregated, d => d.dose1 + d.complete + d.booster1 + d.booster2 + d.booster3);
+
     const x = d3.scalePoint()
         .domain(aggregated.map(d => d.ageLabel))
         .range([0, width - margin.left - margin.right])
-        .padding(0.5);
+        .padding(0.2);
     
+    const maxY = d3.max(series, s => d3.max(s, d => d[1]));
+
     const y = d3.scaleLinear()
-        .domain([0, d3.max(series, s => d3.max(s, d => d[1]))])
+        .domain([0, maxY])
         .range([height - margin.top - margin.bottom, 0]);
     
     const color = d3.scaleOrdinal()
         .domain(keys)
         .range(['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa']);
     
-    // Area generator
     const area = d3.area()
         .x(d => x(d.data.ageLabel))
         .y0(d => y(d[0]))
         .y1(d => y(d[1]))
         .curve(d3.curveMonotoneX);
     
-    // Draw areas
     g.selectAll('.area')
         .data(series)
         .join('path')
         .attr('class', 'area')
         .attr('fill', d => color(d.key))
-        .style('opacity', 0.8)
         .attr('d', area)
+        .style('opacity', 0.8)
         .on('mouseover', function() {
-            d3.select(this).style('opacity', 1);
+            d3.select(this).transition().duration(200).style('opacity', 1);
         })
         .on('mouseout', function() {
-            d3.select(this).style('opacity', 0.8);
+            d3.select(this).transition().duration(200).style('opacity', 0.8);
         });
     
     // Axes
-    g.append('g')
+    const xAxisGroup = g.append('g')
         .attr('class', 'axis')
         .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
-        .call(d3.axisBottom(x))
-        .selectAll('text')
+        .call(d3.axisBottom(x));
+    
+    xAxisGroup.selectAll('text')
         .style('fill', '#fff')
         .style('font-size', '11px')
         .attr('transform', 'rotate(-45)')
         .style('text-anchor', 'end');
     
-    g.append('g')
-        .attr('class', 'axis')
-        .call(d3.axisLeft(y).ticks(8).tickFormat(d => (d / 1e6).toFixed(0) + 'M'))
-        .selectAll('text')
-        .style('fill', '#fff');
+    xAxisGroup.selectAll('line, path')
+        .style('stroke', '#fff');
     
-    // Title
+    const formatYAxis = (value) => {
+        if (value >= 1e6) {
+            return (value / 1e6).toFixed(1) + 'M';
+        } else if (value >= 1e3) {
+            return (value / 1e3).toFixed(0) + 'K';
+        } else {
+            return value.toFixed(0);
+        }
+    };
+    
+    const yAxisGroup = g.append('g')
+        .attr('class', 'axis')
+        .call(d3.axisLeft(y).ticks(5).tickFormat(formatYAxis));
+    
+    yAxisGroup.selectAll('text')
+        .style('fill', '#fff')
+        .style('font-size', '11px');
+    
+    yAxisGroup.selectAll('line, path')
+        .style('stroke', '#fff');
+    
+    const titleText = selectedDepartement === 'all' 
+        ? 'Vaccination Progression: All France' 
+        : `Vaccination Progression: ${ageRegionNames[selectedDepartement]}`;
+    
     svg.append('text')
         .attr('x', width / 2)
         .attr('y', 30)
         .attr('text-anchor', 'middle')
-        .text('Vaccination Progression: From First Dose to Boosters')
+        .text(titleText)
         .style('fill', '#fff')
         .style('font-size', '18px')
         .style('font-weight', 'bold');
     
-    // Legend
     const legend = svg.append('g')
+        .attr('class', 'legend')
         .attr('transform', `translate(${width - margin.right + 20},${margin.top})`);
     
     const legendLabels = {
@@ -273,20 +301,33 @@ function hideTooltip() {
         .remove();
 }
 
-// Setup region selector
+// Setup region selector - connect to global selector in header
 function setupRegionSelector() {
     const select = d3.select('#regionSelect');
     
-    Object.values(ageRegionNames).forEach(region => {
+    // Add "All Régions" option first
+    select.append('option')
+        .attr('value', 'all')
+        .text('All Régions (France)')
+        .property('selected', true);
+    
+    // Add individual regions
+    Object.entries(ageRegionNames).forEach(([code, name]) => {
         select.append('option')
-            .attr('value', region)
-            .text(region)
-            .property('selected', region === 'Île-de-France');
+            .attr('value', code)
+            .text(name);
     });
     
     select.on('change', function() {
         const selectedRegion = this.value;
-        createAgePyramid(selectedRegion);
+        currentSelectedDepartement = selectedRegion;
+        console.log(`📍 Region changed to: ${selectedRegion === 'all' ? 'All France' : ageRegionNames[selectedRegion]}`);
+        createStackedAreaChart(selectedRegion);
+        
+        // Notify gender chart of region change
+        window.dispatchEvent(new CustomEvent('regionChanged', {
+            detail: { regionCode: selectedRegion }
+        }));
     });
 }
 
@@ -294,9 +335,20 @@ function setupRegionSelector() {
 async function initDashboard() {
     await loadData();
 
-    createStackedAreaChart();
-    
     setupRegionSelector();
+    createStackedAreaChart('all');
+    
+    // Add resize listener for responsive charts
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            console.log('🔄 Window resized - re-rendering age vaccination charts');
+            
+            // Re-render stacked area chart with current département selection
+            createStackedAreaChart(currentSelectedDepartement);
+        }, 250);
+    });
 }
 
 // Run

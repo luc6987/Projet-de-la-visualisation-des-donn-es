@@ -80,7 +80,8 @@ function makeGeo(vaccinData) {
         .attr('width', '100%')
         .attr('height', '100%')
         .attr('viewBox', `0 0 ${ctx.MAP_W} ${ctx.MAP_H}`)
-        .attr('preserveAspectRatio', 'xMidYMid meet');
+        .attr('preserveAspectRatio', 'xMidYMid meet')
+        .style('background', 'transparent');
 
     const g = svgMap.append('g');
 
@@ -424,10 +425,8 @@ function showComparisonStats(country1, country2) {
         
         <!-- Comparison Section -->
         <div class="comparison-section">
-            <h4>Coverage Comparison</h4>
             
             <div class="comparison-bar">
-                <div class="comparison-label">1st Dose</div>
                 <div class="comparison-bars">
                     <div class="bar-segment country1" style="width: ${Math.min(stats1.firstDosePercent, 100)}%" title="${countryNames[country1]}: ${stats1.firstDosePercent}%"></div>
                     <div class="bar-segment country2" style="width: ${Math.min(stats2.firstDosePercent, 100)}%" title="${countryNames[country2]}: ${stats2.firstDosePercent}%"></div>
@@ -435,7 +434,6 @@ function showComparisonStats(country1, country2) {
             </div>
             
             <div class="comparison-bar">
-                <div class="comparison-label">2nd Dose</div>
                 <div class="comparison-bars">
                     <div class="bar-segment country1" style="width: ${Math.min(stats1.secondDosePercent, 100)}%" title="${countryNames[country1]}: ${stats1.secondDosePercent}%"></div>
                     <div class="bar-segment country2" style="width: ${Math.min(stats2.secondDosePercent, 100)}%" title="${countryNames[country2]}: ${stats2.secondDosePercent}%"></div>
@@ -443,7 +441,6 @@ function showComparisonStats(country1, country2) {
             </div>
             
             <div class="comparison-bar">
-                <div class="comparison-label">Booster</div>
                 <div class="comparison-bars">
                     <div class="bar-segment country1" style="width: ${Math.min(stats1.boosterPercent, 100)}%" title="${countryNames[country1]}: ${stats1.boosterPercent}%"></div>
                     <div class="bar-segment country2" style="width: ${Math.min(stats2.boosterPercent, 100)}%" title="${countryNames[country2]}: ${stats2.boosterPercent}%"></div>
@@ -453,9 +450,6 @@ function showComparisonStats(country1, country2) {
     `;
 }
 
-/**
- * Get detailed vaccination statistics for a country
- */
 function getDetailedCountryStats(data, countryCode) {
     const countryData = data.filter(d => 
         d.ReportingCountry === countryCode && 
@@ -501,11 +495,6 @@ function getDetailedCountryStats(data, countryCode) {
     };
 }
 
-/**
- * Add COVID cases/deaths overlay circles on the map
- * @param {string} type - 'cases' or 'deaths'
- * @param {number} year - Year to display (2020-2023)
- */
 async function addCovidOverlay(type, year) {
     console.log(`📍 Adding COVID ${type} overlay for ${year}`);
     

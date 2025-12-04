@@ -8,10 +8,23 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>COVID-19 Analysis Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/index_covid.css">
+    <link rel="stylesheet" href="css/index_covid.css?v=8">
 </head>
 
 <body>
+
+    <!-- 3D Starfield Background -->
+    <div class="star-field">
+        <div class="layer"></div>
+        <div class="layer"></div>
+        <div class="layer"></div>
+    </div>
+
+    <!-- Shooting Stars / Comets -->
+    <div class="comet"></div>
+    <div class="comet"></div>
+    <div class="comet"></div>
+    <div class="comet"></div>
 
     <div id="wrapper" role="main" aria-label="COVID-19 Analysis Dashboard" class="flex flex-col xl:flex-row min-h-screen w-full relative z-10 px-2 sm:px-4 lg:px-5">
 
@@ -28,10 +41,6 @@
                     <label for="country2Select" class="text-xs sm:text-sm font-semibold text-left">Country 2:</label>
                     <select id="country2Select" aria-label="Select second country for comparison" class="px-2 py-1.5 border-2 rounded-lg text-xs sm:text-sm cursor-pointer w-full"></select>
                 </div>
-                <button id="updateBtn" class="toggle-btn flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all w-full" aria-label="Update comparison">
-                    <span class="toggle-icon text-lg">🔄</span>
-                    <span class="toggle-text text-sm">Update</span>
-                </button>
             </nav>
 
             <nav class="overlay-controls flex flex-col gap-3 mt-2 p-2 sm:p-3 rounded-lg" role="navigation" aria-label="COVID overlay controls">
@@ -52,10 +61,6 @@
                         <option value="2023" selected>2023</option>
                     </select>
                 </div>
-                <button id="toggleOverlayBtn" class="toggle-btn flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all w-full" aria-label="Toggle COVID overlay on/off">
-                    <span class="toggle-icon">●</span>
-                    <span class="toggle-text text-sm">OFF</span>
-                </button>
             </nav>
 
             <div class="analysis-toggle-container flex justify-center p-3 mt-2 border-t">
@@ -136,61 +141,29 @@
     
     <!-- Initialize COVID Overlay Controls -->
     <script type="module">
-        import { addCovidOverlay } from './js/map.js?v=3';
+        import { addCovidOverlay } from './js/map_eu.js?v=9';
         
         // Initialize COVID overlay controls for the analysis page
         function initializeCovidOverlayControls() {
             const overlayTypeSelect = document.getElementById('covidOverlayType');
             const overlayYearSelect = document.getElementById('covidOverlayYear');
-            const toggleBtn = document.getElementById('toggleOverlayBtn');
             
-            if (!overlayTypeSelect || !overlayYearSelect || !toggleBtn) {
+            if (!overlayTypeSelect || !overlayYearSelect) {
                 console.error('Overlay controls not found');
                 return;
             }
             
-            let isOverlayActive = false;
-            
             const updateOverlay = () => {
-                if (isOverlayActive) {
-                    const type = overlayTypeSelect.value;
-                    const year = overlayYearSelect.value;
-                    
-                    // Don't show overlay if type is 'none'
-                    if (type === 'none') {
-                        addCovidOverlay('none', year);
-                        return;
-                    }
-                    
-                    console.log(`🦠 COVID overlay update: ${type} for year ${year}`);
-                    addCovidOverlay(type, year);
-                } else {
-                    // Turn off overlay
-                    addCovidOverlay('none', 2023);
-                }
+                const type = overlayTypeSelect.value;
+                const year = overlayYearSelect.value;
+                
+                console.log(`🦠 COVID overlay update: ${type} for year ${year}`);
+                addCovidOverlay(type, year);
             };
             
-            const toggleOverlay = () => {
-                isOverlayActive = !isOverlayActive;
-                
-                // Update button appearance
-                if (isOverlayActive) {
-                    toggleBtn.classList.add('active');
-                    toggleBtn.querySelector('.toggle-text').textContent = 'ON';
-                    toggleBtn.setAttribute('aria-pressed', 'true');
-                } else {
-                    toggleBtn.classList.remove('active');
-                    toggleBtn.querySelector('.toggle-text').textContent = 'OFF';
-                    toggleBtn.setAttribute('aria-pressed', 'false');
-                }
-                
-                updateOverlay();
-            };
-            
-            // Event listeners
+            // Event listeners - trigger on change
             overlayTypeSelect.addEventListener('change', updateOverlay);
             overlayYearSelect.addEventListener('change', updateOverlay);
-            toggleBtn.addEventListener('click', toggleOverlay);
             
             console.log("✅ COVID overlay controls initialized for analysis page");
         }
@@ -256,16 +229,6 @@
                     });
                 }
                 
-                // Also listen to update button
-                const updateBtn = document.getElementById('updateBtn');
-                if (updateBtn) {
-                    updateBtn.addEventListener('click', () => {
-                        const c1 = country1Select ? country1Select.value : 'France';
-                        const c2 = country2Select ? country2Select.value : 'Italy';
-                        plotVaccinationVsCases(vaccinDataGlobal, covidDataGlobal, c1, c2, 2021, 2022);
-                    });
-                }
-                
             } catch (error) {
                 console.error("❌ Error initializing vaccination vs cases plot:", error);
             }
@@ -280,7 +243,7 @@
     <!-- COVID Statistics Panel Script -->
     <script type="module">
         import { CleanCovid } from './js/cleanCovid.js';
-        import { showCovidStats } from './js/map.js?v=3';
+        import { showCovidStats } from './js/map_eu.js?v=9';
 
         let covidStatsData = null;
 
@@ -327,7 +290,6 @@
                 // Update when countries change
                 const country1Select = document.getElementById('country1Select');
                 const country2Select = document.getElementById('country2Select');
-                const updateBtn = document.getElementById('updateBtn');
                 
                 if (country1Select) {
                     country1Select.addEventListener('change', updateCovidStats);
@@ -335,10 +297,6 @@
                 
                 if (country2Select) {
                     country2Select.addEventListener('change', updateCovidStats);
-                }
-                
-                if (updateBtn) {
-                    updateBtn.addEventListener('click', updateCovidStats);
                 }
                 
                 console.log("✅ COVID statistics panel initialized");

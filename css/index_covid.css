@@ -21,11 +21,285 @@ body, html {
     height: 100%;        /* Take up full browser height */
     /* Font stack: tries fonts in order until one is available on user's device */
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    /* background: linear-gradient(135deg, #080909 0%, #0f0f10 100%); */  /* Commented out: dark gradient background */
+    /* Space and galaxy theme - deep space background with nebula gradient */
+    background: linear-gradient(135deg, #0a0e27 0%, #1a0b2e 25%, #16213e 50%, #0f0e1d 100%);
+    background-attachment: fixed;
+    position: relative;
     overflow-x: hidden;  /* Hide horizontal scrollbar if content is too wide */
     overflow-y: auto;    /* Show vertical scrollbar only when needed */
     font-size: 16px;     /* Base font size - other sizes use this as reference (1rem = 16px) */
 }
+
+/* Nebula glow effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(65, 105, 225, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 20%, rgba(147, 51, 234, 0.12) 0%, transparent 50%);
+    animation: nebula 60s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 3D Starfield Animation */
+.star-field {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    perspective: 600px;
+    -webkit-perspective: 600px;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.star-field .layer {
+    box-shadow: -411px -476px #cccccc, 777px -407px #d4d4d4, -387px -477px #fcfcfc, -91px -235px #d4d4d4, 491px -460px #f7f7f7, 892px -128px #f7f7f7, 758px -277px #ededed, 596px 378px #cccccc, 647px 423px whitesmoke, 183px 389px #c7c7c7,
+        524px -237px #f0f0f0, 679px -535px #e3e3e3, 158px 399px #ededed, 157px 249px #ededed, 81px -450px #ebebeb, 719px -360px #c2c2c2, -499px 473px #e8e8e8, -158px -349px #d4d4d4, 870px -134px #cfcfcf, 446px 404px #c2c2c2,
+        440px 490px #d4d4d4, 414px 507px #e6e6e6, -12px 246px #fcfcfc, -384px 369px #e3e3e3, 641px -413px #fcfcfc, 822px 516px #dbdbdb, 449px 132px #c2c2c2, 727px 146px #f7f7f7, -315px -488px #e6e6e6, 952px -70px #e3e3e3,
+        -869px -29px #dbdbdb, 502px 80px #dedede, 764px 342px #e0e0e0, -150px -380px #dbdbdb, 654px -426px #e3e3e3, -325px -263px #c2c2c2, 755px -447px #c7c7c7, 729px -177px #c2c2c2, -682px -391px #e6e6e6, 554px -176px #ededed,
+        -85px -428px #d9d9d9, 714px 55px #e8e8e8, 359px -285px #cfcfcf, -362px -508px #dedede, 468px -265px #fcfcfc, 74px -500px #c7c7c7, -514px 383px #dbdbdb, 730px -92px #cfcfcf, -112px 287px #c9c9c9, -853px 79px #d6d6d6,
+        828px 475px #d6d6d6, -681px 13px #fafafa, -176px 209px #f0f0f0, 758px 457px #fafafa, -383px -454px #ededed, 813px 179px #d1d1d1, 608px 98px whitesmoke, -860px -65px #c4c4c4, -572px 272px #f7f7f7, 459px 533px #fcfcfc,
+        624px -481px #e6e6e6, 790px 477px #dedede, 731px -403px #ededed, 70px -534px #cccccc, -23px 510px #cfcfcf, -652px -237px whitesmoke, -690px 367px #d1d1d1, 810px 536px #d1d1d1, 774px 293px #c9c9c9, -362px 97px #c2c2c2,
+        563px 47px #dedede, 313px 475px #e0e0e0, 839px -491px #e3e3e3, -217px 377px #d4d4d4, -581px 239px #c2c2c2, -857px 72px #cccccc, -23px 340px #dedede, -837px 246px white, 170px -502px #cfcfcf, 822px -443px #e0e0e0, 795px 497px #e0e0e0,
+        -814px -337px #cfcfcf, 206px -339px #f2f2f2, -779px 108px #e6e6e6, 808px 2px #d4d4d4, 665px 41px #d4d4d4, -564px 64px #cccccc, -380px 74px #cfcfcf, -369px -60px #f7f7f7, 47px -495px #e3e3e3, -383px 368px #f7f7f7, 419px 288px #d1d1d1,
+        -598px -50px #c2c2c2, -833px 187px #c4c4c4, 378px 325px whitesmoke, -703px 375px #d6d6d6, 392px 520px #d9d9d9, -492px -60px #c4c4c4, 759px 288px #ebebeb, 98px -412px #c4c4c4, -911px -277px #c9c9c9;
+    transform-style: preserve-3d;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: 4px;
+    width: 4px;
+    border-radius: 2px;
+}
+
+.star-field .layer:nth-child(1) {
+    animation: sf-fly-by-1 5s linear infinite;
+}
+
+.star-field .layer:nth-child(2) {
+    animation: sf-fly-by-2 5s linear infinite;
+}
+
+.star-field .layer:nth-child(3) {
+    animation: sf-fly-by-3 5s linear infinite;
+}
+
+@keyframes sf-fly-by-1 {
+    from {
+        transform: translateZ(-400px);
+        opacity: 0.5;
+    }
+    to {
+        transform: translateZ(0);
+        opacity: 0.5;
+    }
+}
+
+@keyframes sf-fly-by-2 {
+    from {
+        transform: translateZ(-1200px);
+        opacity: 0.5;
+    }
+    to {
+        transform: translateZ(-600px);
+        opacity: 0.5;
+    }
+}
+
+@keyframes sf-fly-by-3 {
+    from {
+        transform: translateZ(-1000px);
+        opacity: 0.5;
+    }
+    to {
+        transform: translateZ(-1200px);
+        opacity: 0.5;
+    }
+}
+
+@keyframes nebula {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(360deg) scale(1.1); }
+}
+
+/* Comet Animation - Simple and visible shooting stars */
+/* DISABLED - Comet animations commented out
+.comet {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 10px 3px rgba(255, 255, 255, 1),
+        0 0 20px 5px rgba(125, 211, 252, 0.8),
+        0 0 30px 8px rgba(56, 189, 248, 0.6);
+    z-index: 5;
+    pointer-events: none;
+}
+*/
+
+/* Comet tail */
+/* DISABLED
+.comet::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    width: 150px;
+    height: 2px;
+    background: linear-gradient(to right, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(125, 211, 252, 0.5) 30%,
+        rgba(255, 255, 255, 0.9) 100%);
+    transform: translateY(-50%);
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+    filter: blur(1px);
+}
+*/
+
+/* Comet 1 */
+/* DISABLED
+.comet:nth-child(1) {
+    animation: comet-fly-1 5s linear infinite;
+}
+*/
+
+/* Comet 2 */
+/* DISABLED
+.comet:nth-child(2) {
+    animation: comet-fly-2 6s linear infinite;
+    animation-delay: 2s;
+    width: 5px;
+    height: 5px;
+}
+
+.comet:nth-child(2)::before {
+    width: 180px;
+}
+*/
+
+/* Comet 3 */
+/* DISABLED
+.comet:nth-child(3) {
+    animation: comet-fly-3 4s linear infinite;
+    animation-delay: 4s;
+    width: 3px;
+    height: 3px;
+}
+
+.comet:nth-child(3)::before {
+    width: 120px;
+}
+*/
+
+/* Comet 4 */
+/* DISABLED
+.comet:nth-child(4) {
+    animation: comet-fly-4 7s linear infinite;
+    animation-delay: 6s;
+    width: 6px;
+    height: 6px;
+}
+
+.comet:nth-child(4)::before {
+    width: 200px;
+}
+*/
+
+/* Simple diagonal flight animations */
+/* DISABLED
+@keyframes comet-fly-1 {
+    0% {
+        top: 10%;
+        left: -10%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 80%;
+        left: 100%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+}
+
+@keyframes comet-fly-2 {
+    0% {
+        top: 5%;
+        left: -10%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 90%;
+        left: 110%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+}
+
+@keyframes comet-fly-3 {
+    0% {
+        top: 20%;
+        left: -5%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 70%;
+        left: 90%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+}
+
+@keyframes comet-fly-4 {
+    0% {
+        top: 15%;
+        left: -12%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 95%;
+        left: 105%;
+        opacity: 0;
+        transform: rotate(-45deg);
+    }
+}
+*/
 
 /* ============================================
    RESPONSIVE FONT SCALING
@@ -63,9 +337,10 @@ body, html {
    Uses Flexbox to create a flexible, responsive layout
    ============================================ */
 
-/* Wrapper - layout controlled by Tailwind */
+/* Main wrapper - layout controlled by Tailwind classes */
 #wrapper {
     position: relative;
+    z-index: 10;
 }
 
 /* Content container - layout controlled by Tailwind */
@@ -96,28 +371,23 @@ body, html {
 #dashboardHeader {
     text-align: center;         /* Center all text horizontally */
     padding: 30px 20px;         /* Space inside: 30px top/bottom, 20px left/right */
-    background: rgba(255, 255, 255, 0.95);  /* Almost white with 95% opacity (slight transparency) */
+    background: transparent;  /* Transparent to show starfield */
     border-radius: 15px;        /* Rounded corners with 15px radius */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);  /* Subtle shadow: horizontal, vertical, blur, color */
+    box-shadow: none;  /* No shadow */
 }
 
 /* Main title (h1) styling */
 #dashboardHeader h1 {
     font-size: 2.5rem;          /* Font size: 2.5 times the base size (40px if base is 16px) */
     font-weight: 700;           /* Bold text (700 on scale of 100-900) */
-    color: #2d3748;             /* Dark gray text color */
+    color: white;             /* White text color */
     margin-bottom: 10px;        /* Space below the title */
-    /* Gradient text effect using background clipping */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  /* Purple to darker purple gradient */
-    -webkit-background-clip: text;  /* Clip background to text shape (for Safari/Chrome) */
-    -webkit-text-fill-color: transparent;  /* Make text transparent to show gradient */
-    background-clip: text;      /* Standard property for clipping background to text */
 }
 
 /* Subtitle paragraph styling */
 #dashboardHeader .subtitle {
     font-size: 1.1rem;          /* Slightly larger than base font size */
-    color: #718096;             /* Medium gray color */
+    color: rgba(255, 255, 255, 0.9);             /* White color */
     font-weight: 400;           /* Normal font weight */
     margin-bottom: 20px;        /* Space below subtitle */
 }
@@ -135,7 +405,7 @@ body, html {
     gap: 30px;                  /* Space between control groups */
     margin-top: 20px;           /* Space above the controls */
     padding: 15px;              /* Space inside the container */
-    background: #f7fafc;        /* Very light gray background */
+    background: rgba(255, 255, 255, 0.1);        /* Transparent background */
     border-radius: 10px;        /* Rounded corners */
     flex-wrap: wrap;            /* Allow items to wrap to next line if needed */
 }
@@ -148,9 +418,9 @@ body, html {
     gap: 30px;                  /* Space between control groups */
     margin-top: 10px;           /* Space above (less than global-controls) */
     padding: 12px;              /* Space inside the container */
-    background: #edf2f7;        /* Light blue-gray background */
+    background: rgba(255, 255, 255, 0.1);        /* Transparent background */
     border-radius: 10px;        /* Rounded corners */
-    border: 2px solid #cbd5e0;  /* Gray border around the controls */
+    border: 2px solid rgba(255, 255, 255, 0.3);  /* Transparent border */
 }
 
 /* Individual control group (label + dropdown/button) */
@@ -170,7 +440,7 @@ body, html {
 /* Labels inside control groups */
 .control-group label {
     font-weight: 600;           /* Semi-bold text */
-    color: #2d3748;             /* Dark gray text */
+    color: white;             /* White text */
     font-size: 0.95rem;         /* Slightly smaller than base font */
 }
 
@@ -278,15 +548,17 @@ body, html {
    ============================================ */
 
 .control-group select {
-    padding: 10px 15px;         /* Space inside dropdown: 10px top/bottom, 15px left/right */
+    padding: 10px 20px;         /* Space inside dropdown: 10px top/bottom, 20px left/right - matches toggle-btn */
     border: 2px solid #cbd5e0;  /* Gray border around dropdown */
     border-radius: 8px;         /* Rounded corners */
     background: white;          /* White background */
     color: #2d3748;             /* Dark gray text */
     font-size: 0.95rem;         /* Slightly smaller than base font */
+    font-weight: 600;           /* Semi-bold text - matches toggle-btn */
     cursor: pointer;            /* Show pointer cursor (indicates clickable) */
     transition: all 0.2s ease;  /* Smooth animation for all property changes */
     min-width: 200px;           /* Minimum width to ensure dropdown is readable */
+    height: auto;               /* Auto height */
 }
 
 /* Hover effect: when mouse is over dropdown */
@@ -308,9 +580,9 @@ body, html {
    ============================================ */
 
 .viz-panel {
-    background: rgba(255, 255, 255, 0.98);  /* Almost white with slight transparency */
+    background: transparent;  /* Transparent background to show starfield */
     border-radius: 15px;        /* Rounded corners */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);  /* Shadow for depth: horizontal, vertical, blur, color */
+    box-shadow: none;  /* No shadow */
     padding: 20px;              /* Space inside the panel */
     display: flex;              /* Use flexbox for arranging content */
     flex-direction: column;     /* Stack content vertically */
@@ -322,7 +594,7 @@ body, html {
 /* Hover effect: when mouse is over a visualization panel */
 .viz-panel:hover {
     transform: translateY(-5px);  /* Move panel up by 5 pixels */
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);  /* Larger shadow for lifted appearance */
+    box-shadow: none;  /* No shadow */
 }
 
 /* ============================================
@@ -340,7 +612,7 @@ body, html {
 .panel-header h2 {
     font-size: 1.5rem;          /* 1.5 times the base font size */
     font-weight: 600;           /* Semi-bold text */
-    color: #2d3748;             /* Dark gray color */
+    color: white;             /* White color */
     margin-bottom: 5px;         /* Small space below heading */
 }
 
@@ -360,7 +632,7 @@ body, html {
 
 /* Map visualization area */
 #mapArea {
-    background: #f7fafc;        /* Very light gray background */
+    background: transparent;        /* Transparent background */
     border-radius: 10px;        /* Rounded corners */
     position: relative;         /* Position context for absolutely positioned children */
 }
@@ -378,7 +650,7 @@ body, html {
    ============================================ */
 
 .stats-panel {
-    background: #ffffff;        /* White background */
+    background: rgba(255, 255, 255, 0.1);        /* Transparent background */
     border-radius: 10px;        /* Rounded corners */
 }
 
@@ -386,10 +658,10 @@ body, html {
 .stats-panel h3 {
     font-size: 0.95rem;         /* Slightly smaller than base font */
     font-weight: 700;           /* Bold text */
-    color: #2d3748;             /* Dark gray color */
+    color: white;             /* White color */
     margin-bottom: 10px;        /* Space below heading */
     padding-bottom: 8px;        /* Space between heading and separator line */
-    border-bottom: 2px solid #e2e8f0;  /* Horizontal separator line */
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);  /* Horizontal separator line */
 }
 
 /* Loading message shown before data is available */
@@ -574,3 +846,67 @@ body, html {
 }
 
 /* All responsive layout now controlled by Tailwind classes in HTML */
+
+/* ============================================
+   D3.JS CHART STYLING
+   Styles for all D3 visualizations - axis labels, titles, etc.
+   ============================================ */
+
+/* Make all section h2 titles white */
+.viz-panel h2,
+#boxViolinSection h2,
+#growthRateSection h2,
+#mapSection h2,
+#tsCovidSection h2 {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Make all D3 axis text white */
+.axis text,
+.x-axis text,
+.y-axis text,
+svg text {
+    fill: white !important;
+}
+
+/* Make all D3 axis lines and paths white */
+.axis line,
+.axis path,
+.x-axis line,
+.x-axis path,
+.y-axis line,
+.y-axis path {
+    stroke: white !important;
+}
+
+/* Make tick marks white */
+.tick line {
+    stroke: white !important;
+}
+
+.tick text {
+    fill: white !important;
+}
+
+/* Chart labels and titles */
+.chart-label,
+.axis-label {
+    fill: white !important;
+}
+
+/* Ensure specific sections are transparent */
+#boxViolinSection,
+#growthRateSection,
+#mapSection,
+#tsCovidSection {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Ensure plot containers are transparent */
+#boxViolinPlot,
+#growthRatePlot,
+#tsCovidPlot {
+    background: transparent !important;
+}

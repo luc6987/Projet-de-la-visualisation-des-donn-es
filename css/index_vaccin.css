@@ -125,6 +125,7 @@ body::before {
 }
 
 /* Comet Animation - Simple and visible shooting stars */
+/* DISABLED - Comet animations commented out
 .comet {
     position: fixed;
     width: 4px;
@@ -138,8 +139,10 @@ body::before {
     z-index: 5;
     pointer-events: none;
 }
+*/
 
 /* Comet tail */
+/* DISABLED
 .comet::before {
     content: '';
     position: absolute;
@@ -155,13 +158,17 @@ body::before {
     box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
     filter: blur(1px);
 }
+*/
 
 /* Comet 1 */
+/* DISABLED
 .comet:nth-child(1) {
     animation: comet-fly-1 5s linear infinite;
 }
+*/
 
 /* Comet 2 */
+/* DISABLED
 .comet:nth-child(2) {
     animation: comet-fly-2 6s linear infinite;
     animation-delay: 2s;
@@ -172,8 +179,10 @@ body::before {
 .comet:nth-child(2)::before {
     width: 180px;
 }
+*/
 
 /* Comet 3 */
+/* DISABLED
 .comet:nth-child(3) {
     animation: comet-fly-3 4s linear infinite;
     animation-delay: 4s;
@@ -184,8 +193,10 @@ body::before {
 .comet:nth-child(3)::before {
     width: 120px;
 }
+*/
 
 /* Comet 4 */
+/* DISABLED
 .comet:nth-child(4) {
     animation: comet-fly-4 7s linear infinite;
     animation-delay: 6s;
@@ -196,8 +207,10 @@ body::before {
 .comet:nth-child(4)::before {
     width: 200px;
 }
+*/
 
 /* Simple diagonal flight animations */
+/* DISABLED
 @keyframes comet-fly-1 {
     0% {
         top: 10%;
@@ -281,6 +294,7 @@ body::before {
         transform: rotate(-45deg);
     }
 }
+*/
 
 
 /* ============================================
@@ -324,8 +338,10 @@ body::before {
     background: transparent;
     border-radius: 15px;
     box-shadow: none;
-    flex: 0 0 40%;              /* Fixed 40% width, don't grow or shrink */
-    max-width: 40%;             /* Maximum 40% width */
+    flex: 0 0 25%;              /* Fixed 25% width, don't grow or shrink */
+    max-width: 25%;             /* Maximum 25% width */
+    overflow-y: visible;        /* Don't create scrollbar */
+    overflow-x: visible;        /* Don't create scrollbar */
 }
 
 /* Main title (h1) styling */
@@ -897,7 +913,7 @@ body::before {
 @media (max-width: 1279px) {
     #dashboardHeader {
         flex: 1 1 auto;         /* Reset to auto width */
-        max-width: 100%;        /* Full width on tablet */
+        max-width: 80%;        /* Full width on tablet */
     }
 
     #barSection,
@@ -1066,6 +1082,7 @@ body::before {
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
+    overflow: visible;  /* Don't make the panel scrollable */
 }
 
 #heatmapSection {

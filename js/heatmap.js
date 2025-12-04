@@ -81,6 +81,13 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
 
   // Match Python figsize=(16, 8) -> responsive for dashboard integration
   const container = d3.select('#heatmap').node();
+  
+  // Check if container exists
+  if (!container) {
+    console.warn('⚠️ Heatmap container not found, skipping render');
+    return;
+  }
+  
   const containerWidth = container.getBoundingClientRect().width;
   const containerHeight = container.getBoundingClientRect().height;
   
@@ -94,6 +101,7 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     .attr('height', '100%')
     .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
     .attr('preserveAspectRatio', 'xMidYMid meet')
+    .style('background', 'transparent')
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -128,7 +136,7 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
   // Custom space-themed color scheme - Purple to Cyan gradient
   const colorScale = d3.scaleSequential()
     .domain([minValue, maxValue])
-    .interpolator(d3.interpolatePurples);
+    .interpolator(d3.interpolateYlOrRd);
 
   // Draw heatmap cells with beautiful cascading animation from left to right
   const cells = svg.selectAll('rect')
@@ -151,15 +159,14 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     .duration(600)
     .delay((d, i) => {
       // Calculate delay based on column (left to right) and add slight row offset
-      const colDelay = d.col * 80; // Primary delay based on column
-      const rowDelay = d.row * 15; // Secondary stagger within column
+      const colDelay = d.col * 80; 
+      const rowDelay = d.row * 15; 
       return colDelay + rowDelay;
     })
     .ease(d3.easeCubicOut)
     .style('opacity', 1)
     .style('transform', 'scale(1)');
 
-  // Add hover effects for interactivity
   cells
     .on('mouseover', function(event, d) {
       // Remove any existing tooltips first
@@ -229,7 +236,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     .delay(400)
     .style('opacity', 1);
 
-  // Y-axis - matching Python fontsize=11
   const yAxis = svg.append('g')
     .call(d3.axisLeft(y).tickSize(0))
     .style('font-size', '11px')
@@ -239,13 +245,11 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
   yAxis.select('.domain').remove();
   yAxis.selectAll('.tick line').style('stroke', 'white');
 
-  // Animate y-axis
   yAxis.transition()
     .duration(800)
     .delay(200)
     .style('opacity', 1);
 
-  // Colorbar - matching Python colorbar settings
   const legendWidth = 15;
   const legendHeight = height * 0.7;
   
@@ -389,6 +393,9 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
 
   // Add resize listener to make heatmap responsive
   window.addEventListener('resize', function() {
+    const container = d3.select('#heatmap').node();
+    if (!container) return; // Skip if container doesn't exist
+    
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function() {
       renderHeatmap(currentCountry);

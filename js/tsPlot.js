@@ -127,6 +127,7 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         .attr("preserveAspectRatio", "xMidYMid meet")
         .style("display", "block")
         .style("margin", "0 auto")
+        .style("background", "transparent")
         .style("background", "transparent");
     
     const g = svg.append("g")
@@ -209,7 +210,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
             .attr("d", line)
             .style("opacity", 0);
         
-        // Animate line drawing
         const totalLength = path.node().getTotalLength();
         path
             .attr("stroke-dasharray", `${totalLength} ${totalLength}`)
@@ -220,8 +220,7 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
             .ease(d3.easeCubicOut)
             .attr("stroke-dashoffset", 0)
             .style("opacity", 1);
-        // Data points (circles) removed for cleaner visualization
-        // Add final value annotation at end of line
+
         const lastPoint = country.data[country.data.length - 1];
         const finalUptake = lastPoint[`${doseType}_uptake`];
         
@@ -241,7 +240,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
             .style("opacity", 1);
     });
     
-    // Add X-axis
     const xAxis = g.append("g")
         .attr("class", "x-axis")
         .attr("transform", `translate(0,${height})`)
@@ -267,7 +265,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
     xAxis.selectAll(".domain").style("stroke", "#a5b4fc");
     xAxis.selectAll(".tick line").style("stroke", "#a5b4fc");
     
-    // Add Y-axis
     const yAxis = g.append("g")
         .attr("class", "y-axis")
         .style("opacity", 0)
@@ -287,7 +284,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         .delay(500)
         .style("opacity", 1);
     
-    // Add axis labels
     g.append("text")
         .attr("class", "x-label")
         .attr("text-anchor", "middle")
@@ -319,29 +315,30 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         .delay(1000)
         .style("opacity", 1);
     
-    // Add title
     const doseLabel = doseLabels[doseType] || doseType;
     const countriesStr = processedData.slice(0, 3).map(d => d.countryName).join(", ");
     const titleStr = processedData.length > 3 
         ? `${countriesStr} and ${processedData.length - 3} more`
         : countriesStr;
     
+    const titleText = `Cumulative COVID-19 Vaccine Uptake: ${doseLabel}`;
+    const titleFontSize = titleText.length > 45 ? "14px" : "16px";
+    
     svg.append("text")
         .attr("class", "main-title")
-        .attr("x", 600 / 2)
-        .attr("y", 30)
+        .attr("x", (width + margin.left + margin.right) / 2)
+        .attr("y", 25)
         .attr("text-anchor", "middle")
-        .style("font-size", "16px")
+        .style("font-size", titleFontSize)
         .style("font-weight", "bold")
         .style("fill", "#e0e7ff")
         .style("opacity", 0)
-        .text(`Cumulative COVID-19 Vaccine Uptake: ${doseLabel}`)
+        .text(titleText)
         .transition()
         .duration(800)
         .delay(800)
         .style("opacity", 1);
     
-    // Add legend (positioned to the right with more spacing)
     const legend = svg.append("g")
         .attr("class", "legend")
         .attr("transform", `translate(${width + margin.left+50}, ${margin.top})`);
@@ -390,7 +387,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
     
     console.log(`✅ Cumulative uptake chart created successfully`);
     
-    // Log final uptake percentages
     console.log(`\n📊 Final Uptake Percentages - ${doseLabel}`);
     processedData.forEach(country => {
         const lastPoint = country.data[country.data.length - 1];
@@ -399,20 +395,15 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
     });
 }
 
-
-// Global variable to store loaded vaccination data
 let globalData = null;
 
 
 function updateChart() {
-    // Get selected countries from checkboxes
     const checkboxes = document.querySelectorAll('#countryCheckboxes input[type="checkbox"]:checked');
     const selectedCountries = Array.from(checkboxes).map(cb => cb.value);
     
-    // Update the selected countries display
     updateSelectedCountriesDisplay(selectedCountries);
     
-    // Get selected dose type
     const doseType = document.getElementById('doseTypeSelect').value;
     
     if (globalData && selectedCountries.length > 0) {
@@ -420,7 +411,6 @@ function updateChart() {
         plotCumulativeUptake(globalData, selectedCountries, doseType);
     } else if (selectedCountries.length === 0) {
         console.warn("Please select at least one country");
-        // Clear the chart
         d3.select("#tsPlot").selectAll("*").remove();
         d3.select("#tsPlot").append("div")
             .attr("class", "loading")
@@ -428,16 +418,13 @@ function updateChart() {
     }
 }
 
-/**
- * Update the display showing selected countries as badges
- */
 function updateSelectedCountriesDisplay(selectedCountries) {
     const display = document.getElementById('selectedCountriesDisplay');
     
     if (selectedCountries.length === 0) {
         display.innerHTML = '<em style="color: #999;">No countries selected</em>';
     } else {
-        // Get country names
+
         const countryNames = {
             'FR': 'France', 'DE': 'Germany', 'IT': 'Italy', 'ES': 'Spain',
             'PL': 'Poland', 'RO': 'Romania', 'NL': 'Netherlands', 'BE': 'Belgium',
@@ -455,38 +442,27 @@ function updateSelectedCountriesDisplay(selectedCountries) {
     }
 }
 
-// Load data from CSV and initialize visualization
-// Don't auto-initialize if in dashboard mode (controlled by main.js)
 if (!window.__dashboardMode) {
     CleanVaccin().then(data => {
         console.log("Data loaded, creating visualization...");
         globalData = data;
-        
-        // Create initial chart with France, Germany, Italy, Spain
         plotCumulativeUptake(data, ['FR', 'DE', 'IT', 'ES'], 'SecondDose');
         
-        // Attach event listeners to all country checkboxes
         const checkboxes = document.querySelectorAll('#countryCheckboxes input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', updateChart);
         });
         
-        // Attach event listener to dose type dropdown
         document.getElementById('doseTypeSelect').addEventListener('change', updateChart);
-        
-        // Add Select All functionality
+    
         document.getElementById('selectAll').addEventListener('click', () => {
             checkboxes.forEach(cb => cb.checked = true);
             updateChart();
         });
-        
-        // Add Clear All functionality
         document.getElementById('clearAll').addEventListener('click', () => {
             checkboxes.forEach(cb => cb.checked = false);
             updateChart();
         });
-        
-        // Add toggle functionality for country panel
         const toggleButton = document.getElementById('toggleCountryPanel');
         const countryPanel = document.getElementById('countryPanel');
         

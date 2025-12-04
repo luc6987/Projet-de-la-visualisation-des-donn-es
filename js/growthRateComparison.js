@@ -316,7 +316,6 @@ function drawComparison(country1Data, country2Data) {
         .append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
-        .style('background', '#fff')
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);    // Scales
     const allDates = [...country1Data.map(d => d.date), ...country2Data.map(d => d.date)];

@@ -4,10 +4,10 @@ const CONFIG = {
     // Chart dimensions
     dimensions: {
         pyramid: {
-            totalWidth: 800,
-            height: 700,
+            totalWidth: 600,
+            height: 400,
             margin: { top: 40, right: 40, bottom: 40, left: 40 },
-            centerGap: 50
+            centerGap: 120
         }
     },
     // Animation settings
@@ -25,7 +25,7 @@ const CONFIG = {
         barPadding: 0.1,
         strokeWidth: 0.5,
         fontSize: {
-            small: '9px',
+            small: '13px',
             normal: '12px',
             medium: '13px',
             large: '14px',
@@ -166,6 +166,7 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
         .attr("preserveAspectRatio", "xMidYMid meet")
         .style("display", "block")
         .style("margin", "0 auto")
+        .style("background", "transparent")
         .style("background", "transparent");
     
     // Create scales

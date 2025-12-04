@@ -78,7 +78,7 @@ function processVaccineData(data, countryCode) {
         const min = Math.min(...weeklyDoses);
         const max = Math.max(...weeklyDoses);
         
-        if (max === min) return; // Avoid division by zero
+        if (max === min) return; 
         
         const normalized = weeklyDoses.map(d => (d - min) / (max - min));
         
@@ -137,13 +137,13 @@ function plotRidgelineKDE(data, countryCode) {
     
     // Get container dimensions for responsive sizing
     const container = document.getElementById('chart');
-    const containerWidth = container.clientWidth || 1000;
-    const containerHeight = container.clientHeight || 600;
+    const containerWidth = container.clientWidth || 1200;
+    const containerHeight = container.clientHeight || 700;
     
     // Chart dimensions - responsive to container
-    const margin = { top: 60, right: 50, bottom: 60, left: 120 };
-    const rowHeight = 50;
-    const width = Math.min(containerWidth - margin.left - margin.right, 1400);
+    const margin = { top: 70, right: 60, bottom: 70, left: 140 };
+    const rowHeight = 70;
+    const width = Math.min(containerWidth - margin.left - margin.right, 1600);
     const height = vaccines.length * rowHeight;
     
     // Clear any existing chart
@@ -232,7 +232,8 @@ function plotRidgelineKDE(data, countryCode) {
         .attr('transform', `translate(0, ${height})`)
         .call(d3.axisBottom(xScale).ticks(10))
         .selectAll('text')
-        .style('fill', 'white');
+        .style('fill', 'white')
+        .style('font-size', '14px');
     
     svg.select('g').selectAll('.domain, .tick line').style('stroke', 'white');
     
@@ -240,10 +241,10 @@ function plotRidgelineKDE(data, countryCode) {
         .attr('x', width / 2)
         .attr('y', 45)
         .attr('fill', 'white')
-        .style('font-size', '13px')
+        .style('font-size', '16px')
         .style('font-weight', 'normal')
         .style('text-anchor', 'middle')
-        .text('Normalized Weekly Doses');
+        .text('Normalized Weekly Doses Distribution');
     
     // Y-axis (vaccine labels)
     const yAxis = d3.axisLeft(yScale)
@@ -254,7 +255,7 @@ function plotRidgelineKDE(data, countryCode) {
         .call(yAxis);
     
     yAxisGroup.selectAll('text')
-        .style('font-size', '11px')
+        .style('font-size', '14px')
         .style('fill', 'white');
     
     yAxisGroup.selectAll('.domain, .tick line').style('stroke', 'white');
@@ -264,7 +265,7 @@ function plotRidgelineKDE(data, countryCode) {
         .attr('x', width / 2)
         .attr('y', -30)
         .attr('text-anchor', 'middle')
-        .style('font-size', '16px')
+        .style('font-size', '24px')
         .style('font-weight', 'bold')
         .style('fill', 'white')
         .text(`Vaccine Distribution Comparison (Ridgeline KDE) - ${countryNames[countryCode] || countryCode}`);
@@ -300,12 +301,14 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
     }
     // Get container dimensions for responsive sizing
     const container = document.getElementById('chart');
-    const containerWidth = container.clientWidth || 1000;
-    const containerHeight = container.clientHeight || 600;
+    const containerWidth =  1200;
+    const containerHeight = 700;
+    console.log(containerHeight);
+    console.log(containerWidth);
     // Chart dimensions - responsive to container
-    const margin = { top: 80, right: 120, bottom: 60, left: 150 };
-    const rowHeight = 60;
-    const width = Math.min(containerWidth - margin.left - margin.right, 1400);
+    const margin = { top: 90, right: 140, bottom: 70, left: 170 };
+    const rowHeight = 80;
+    const width = Math.min(containerWidth - margin.left - margin.right, 1600);
     const height = allVaccines.length * rowHeight;
     // Clear any existing chart with transition
     d3.select('#chart').selectAll('*')
@@ -328,6 +331,7 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
             .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
             .attr('preserveAspectRatio', 'xMidYMid meet')
             .style('opacity', 0)  // Start invisible
+            .style('background', 'transparent')
             .append('g')
             .attr('transform', `translate(${margin.left}, ${margin.top})`);
         
@@ -350,8 +354,8 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
     const xValues = d3.range(0, 1.01, 0.01);
     const bandwidth = 0.05;
     // Colors for two countries - vibrant space theme
-    const color1 = '#00d4ff';  // Cyan for country 1
-    const color2 = '#ff00ff';  // Magenta for country 2
+    const color1 = '#00E5FF';  // Cyan for country 1
+    const color2 = '#FFC300';  // Magenta for country 2
     
     // Create ridges for each vaccine
     allVaccines.forEach((vaccine, idx) => {
@@ -464,7 +468,9 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
         .style('opacity', 0)
         .call(d3.axisBottom(xScale).ticks(10));
     
-    xAxisGroup.selectAll('text').style('fill', 'white');
+    xAxisGroup.selectAll('text')
+        .style('fill', 'white')
+        .style('font-size', '20px');
     xAxisGroup.selectAll('.domain, .tick line').style('stroke', 'white');
     
     xAxisGroup.transition()
@@ -476,7 +482,7 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
         .attr('x', width / 2)
         .attr('y', 45)
         .attr('fill', 'white')
-        .style('font-size', '13px')
+        .style('font-size', '20px')
         .style('font-weight', 'normal')
         .style('text-anchor', 'middle')
         .text('Normalized Weekly Doses');
@@ -491,7 +497,7 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
         .call(yAxis);
     
     yAxisGroup.selectAll('text')
-        .style('font-size', '11px')
+        .style('font-size', '25px')
         .style('fill', 'white');
     
     yAxisGroup.selectAll('.domain, .tick line').style('stroke', 'white');
@@ -508,7 +514,7 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
         .attr('x', width / 2)
         .attr('y', -50)
         .attr('text-anchor', 'middle')
-        .style('font-size', '18px')
+        .style('font-size', '26px')
         .style('font-weight', 'bold')
         .style('fill', 'white')
         .style('opacity', 0)
@@ -541,7 +547,7 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
     legend.append('text')
         .attr('x', 25)
         .attr('y', 12)
-        .style('font-size', '12px')
+        .style('font-size', '20px')
         .style('fill', 'white')
         .text(country1Name);
     
@@ -558,7 +564,7 @@ function plotTwoCountryComparison(data, countryCode1, countryCode2) {
     legend.append('text')
         .attr('x', 25)
         .attr('y', 37)
-        .style('font-size', '12px')
+        .style('font-size', '20px')
         .style('fill', 'white')
         .text(country2Name);
     

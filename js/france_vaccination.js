@@ -1,17 +1,9 @@
-// France Vaccination Data Visualization
-// Plots cumulative vaccination data by region with interactive dose type selection
 
-/**
- * Create dot plot visualization for French vaccination data
- * @param {string} containerSelector - CSS selector for container
- */
 export async function createFranceVaccinationPlot(containerSelector = '#vaccinPlot') {
     const container = d3.select(containerSelector);
     
-    // Clear existing content
     container.html('');
     
-    // Get container dimensions
     const containerNode = container.node();
     const rect = containerNode.getBoundingClientRect();
     const width = rect.width || 800;
@@ -20,7 +12,7 @@ export async function createFranceVaccinationPlot(containerSelector = '#vaccinPl
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
 
-    // Create control buttons container
+
     const controlsDiv = container.append('div')
         .attr('class', 'dose-controls')
         .style('text-align', 'center')

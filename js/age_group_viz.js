@@ -21,18 +21,19 @@ function parseYearWeek(yearWeek) {
 // Sort age groups from youngest to oldest
 function sortAgeGroups(groups) {
     const ageOrder = {
-        'Age0_4': 1,
-        'Age5_9': 2,
-        'Age10_14': 3,
-        'Age15_17': 4,
+        'Age5_9': 1,
+        'Age10_14': 2,
+        'Age15_17': 3,
+        'Age<18': 4,
         'Age18_24': 5,
         'Age25_49': 6,
         'Age50_59': 7,
-        'Age60_69': 8,
-        'Age70_79': 9,
-        'Age80+': 10,
-        'Age<18': 11,
-        'ALL': 12
+        '1_Age<60': 8,
+        'Age60_69': 9,
+        '1_Age60+': 10,
+        'Age70_79': 11,
+        'Age80+': 12,
+        'ALL': 13
     };
     
     return groups.sort((a, b) => {
@@ -45,6 +46,8 @@ function sortAgeGroups(groups) {
 // Format age group labels
 function formatAgeGroup(group) {
     if (group === 'Age<18') return '< 18 years';
+    if (group === '1_Age<60') return '< 60 years';
+    if (group === '1_Age60+') return '60+ years';
     if (group === 'ALL') return 'All Ages';
     if (group === 'Age80+') return '80+ years';
     
@@ -65,8 +68,9 @@ export async function createAgeGroupDashboard(containerSelector, selectedCountry
     
     // Set dimensions
     const totalWidth = container.node().getBoundingClientRect().width || 1400;
-    const totalHeight = 600;
-    const margin = { top: 60, right: 40, bottom: 80, left: 120 };
+    const totalHeight = 550;
+    // Line 451 - Increase bottom margin
+const margin = { top: 20, right: 150, bottom: 90, left: 80 }; // Change bottom from 60 to 80
     
     // Create main container
     const mainDiv = container.append('div')
@@ -86,19 +90,17 @@ export async function createAgeGroupDashboard(containerSelector, selectedCountry
         .style('margin-bottom', '20px')
         .html(`💉 COVID-19 Vaccination Analysis by Age Group <span style="color: #a78bfa;">${selectedCountry}</span>`);
     
-    // Create two-column layout
+    // Create vertical layout: cumulative line chart on top, stacked bar below
     const chartsContainer = mainDiv.append('div')
         .style('display', 'flex')
-        .style('gap', '20px')
-        .style('justify-content', 'space-between');
+        .style('flex-direction', 'column')
+        .style('gap', '30px');
     
-    const leftPanel = chartsContainer.append('div')
-        .style('flex', '1')
-        .style('min-width', '0');
+    const topPanel = chartsContainer.append('div')
+        .style('width', '100%');
     
-    const rightPanel = chartsContainer.append('div')
-        .style('flex', '1')
-        .style('min-width', '0');
+    const bottomPanel = chartsContainer.append('div')
+        .style('width', '100%');
     
     try {
         // Load the vaccination data
@@ -135,11 +137,11 @@ export async function createAgeGroupDashboard(containerSelector, selectedCountry
         
         console.log(`📊 Creating charts for ${selectedCountry}...`);
         
-        // CHART 1: Stacked Horizontal Bar Chart by Age Group
-        createStackedBarChart(leftPanel, countryData);
+        // CHART 1: Cumulative Line Chart by Week (top)
+        createCumulativeLineChart(topPanel, countryData);
         
-        // CHART 2: Cumulative Line Chart by Week
-        createCumulativeLineChart(rightPanel, countryData);
+        // CHART 2: Stacked Horizontal Bar Chart by Age Group (bottom)
+        createStackedBarChart(bottomPanel, countryData);
         
         console.log("✅ Age Group Dashboard created successfully");
         
@@ -153,8 +155,8 @@ export async function createAgeGroupDashboard(containerSelector, selectedCountry
     }
 }
 
-// Create stacked horizontal bar chart
-function createStackedBarChart(containerSelector, data) {
+// Create stacked horizontal bar chart (ECDC-style with progressive capping)
+function createStackedBarChart(containerSelector, data, country = 'AT') {
     console.log("📊 Creating stacked bar chart...");
     console.log("Input data length:", data.length);
     console.log("Sample data:", data[0]);
@@ -169,63 +171,99 @@ function createStackedBarChart(containerSelector, data) {
         return;
     }
     
-    // Get the last date in the dataset
-    const lastDate = d3.max(data, d => d.date);
-    console.log("Last date:", lastDate);
+    // Clear existing content
+    container.html('');
     
-    if (!lastDate) {
-        console.error("❌ No valid dates found in data");
-        container.append('div')
-            .style('color', '#ff6b6b')
-            .style('padding', '20px')
-            .text('Error: No valid date information in dataset');
-        return;
+    // Country name mapping
+    const countryNames = {
+        'AT': 'Austria', 'BE': 'Belgium', 'CY': 'Cyprus', 'CZ': 'Czechia', 'DE': 'Germany',
+        'DK': 'Denmark', 'EE': 'Estonia', 'EL': 'Greece', 'ES': 'Spain', 'FI': 'Finland',
+        'FR': 'France', 'HR': 'Croatia', 'HU': 'Hungary', 'IE': 'Ireland', 'IS': 'Iceland',
+        'IT': 'Italy', 'LI': 'Liechtenstein', 'LT': 'Lithuania', 'LU': 'Luxembourg', 'LV': 'Latvia',
+        'MT': 'Malta', 'NL': 'Netherlands', 'NO': 'Norway', 'PL': 'Poland', 'PT': 'Portugal',
+        'RO': 'Romania', 'SE': 'Sweden', 'SI': 'Slovenia', 'SK': 'Slovakia', 'EU': 'European Union'
+    };
+    
+    // Add title
+    container.append('h3')
+        .style('text-align', 'center')
+        .style('color', '#a78bfa')
+        .style('margin-bottom', '10px')
+        .style('font-size', '18px')
+        .text(`Vaccination Coverage by Age Group - ${countryNames[country] || country}`);
+    
+    // VALID AGE GROUPS - includes both detailed and broader categories
+    const VALID_AGE_GROUPS = [
+        "Age5_9", "Age10_14", "Age15_17", "Age<18", "Age18_24",
+        "Age25_49", "Age50_59", "1_Age<60", "Age60_69", "1_Age60+", "Age70_79", "Age80+"
+    ];
+    
+    const AGE_LABELS = {
+        Age5_9: "5–9 years",
+        Age10_14: "10–14 years",
+        Age15_17: "15–17 years",
+        "Age<18": "< 18 years",
+        Age18_24: "18–24 years",
+        Age25_49: "25–49 years",
+        Age50_59: "50–59 years",
+        "1_Age<60": "< 60 years",
+        Age60_69: "60–69 years",
+        "1_Age60+": "60+ years",
+        Age70_79: "70–79 years",
+        "Age80+": "80+ years"
+    };
+    
+    // Filter data for valid age groups
+    const filtered = data.filter(d => VALID_AGE_GROUPS.includes(d.TargetGroup));
+    
+    // Group by age group
+    const grouped = d3.group(filtered, d => d.TargetGroup);
+    const rows = [];
+    
+    for (const [age, groupRows] of grouped.entries()) {
+        const pop = d3.max(groupRows, d => parseFloat(d.Denominator) || parseFloat(d.Population) || 0);
+        if (!pop) continue;
+        
+        // CUMULATIVE totals across all weeks
+        const cumSecond = d3.sum(groupRows, d => cleanNumeric(d.SecondDose));
+        const cumB1 = d3.sum(groupRows, d => cleanNumeric(d.DoseAdditional1));
+        const cumB2 = d3.sum(groupRows, d => cleanNumeric(d.DoseAdditional2));
+        const cumB3 = d3.sum(groupRows, d =>
+            cleanNumeric(d.DoseAdditional3) +
+            cleanNumeric(d.DoseAdditional4) +
+            cleanNumeric(d.DoseAdditional5)
+        );
+        
+        // Convert to percentages
+        let fullVacc = (cumSecond / pop) * 100;
+        let booster1 = (cumB1 / pop) * 100;
+        let booster2 = (cumB2 / pop) * 100;
+        let booster3 = (cumB3 / pop) * 100;
+        
+        // 👉 ECDC Progressive Capping (NO rescaling)
+        fullVacc = Math.min(fullVacc, 100);
+        booster1 = Math.min(booster1, 100 - fullVacc);
+        booster2 = Math.min(booster2, 100 - fullVacc - booster1);
+        booster3 = Math.min(booster3, 100 - fullVacc - booster1 - booster2);
+        
+        const unvaccinated = 100 - fullVacc - booster1 - booster2 - booster3;
+        
+        rows.push({
+            age,
+            Unvaccinated: unvaccinated,
+            FullVacc: fullVacc,
+            Booster1: booster1,
+            Booster2: booster2,
+            Booster3: booster3
+        });
     }
     
-    // Calculate CUMULATIVE doses up to the last date for each age group
-    // Group by age group and sum ALL doses across ALL weeks
-    const ageGroupData = d3.rollup(
-        data, // Use ALL data, not just last date
-        v => {
-            // Get population - use Denominator or Population field
-            const population = d3.max(v, d => parseFloat(d.Denominator) || parseFloat(d.Population) || 0);
-            
-            // Sum ALL doses across all weeks for cumulative total
-            const firstDose = d3.sum(v, d => d.FirstDose);
-            const secondDose = d3.sum(v, d => d.SecondDose);
-            const additional1 = d3.sum(v, d => d.DoseAdditional1);
-            const additional2 = d3.sum(v, d => d.DoseAdditional2);
-            const additional3 = d3.sum(v, d => d.DoseAdditional3);
-            const additional4Plus = d3.sum(v, d => d.DoseAdditional4 + d.DoseAdditional5);
-            
-            console.log(`Age group data - Population: ${population}, FirstDose: ${firstDose}, SecondDose: ${secondDose}`);
-            
-            return {
-                population: population,
-                FirstDose: population > 0 ? (firstDose / population) * 100 : 0,
-                SecondDose: population > 0 ? (secondDose / population) * 100 : 0,
-                DoseAdditional1: population > 0 ? (additional1 / population) * 100 : 0,
-                DoseAdditional2: population > 0 ? (additional2 / population) * 100 : 0,
-                DoseAdditional3: population > 0 ? (additional3 / population) * 100 : 0,
-                DoseAdditional4Plus: population > 0 ? (additional4Plus / population) * 100 : 0
-            };
-        },
-        d => d.TargetGroup
-    );
+    // Order age groups correctly
+    rows.sort((a, b) => VALID_AGE_GROUPS.indexOf(a.age) - VALID_AGE_GROUPS.indexOf(b.age));
     
-    // Convert to array and sort
-    let ageGroups = Array.from(ageGroupData.keys()).filter(g => g && g !== 'ALL');
-    console.log("Age groups found:", ageGroups);
-    ageGroups = sortAgeGroups(ageGroups);
+    console.log("Chart data:", rows);
     
-    const chartData = ageGroups.map(group => ({
-        ageGroup: group,
-        ...ageGroupData.get(group)
-    }));
-    
-    console.log("Chart data:", chartData);
-    
-    if (chartData.length === 0) {
+    if (rows.length === 0) {
         console.error("❌ No age group data found");
         container.append('div')
             .style('color', '#ff6b6b')
@@ -235,6 +273,7 @@ function createStackedBarChart(containerSelector, data) {
     }
     
     // Add title
+    const lastDate = d3.max(data, d => d.date);
     const formatDate = d3.timeFormat('%b %d, %Y');
     container.append('div')
         .style('color', '#c4b5fd')
@@ -245,10 +284,10 @@ function createStackedBarChart(containerSelector, data) {
         .text('📊 Cumulative Vaccine Uptake by Age Group (as of ' + formatDate(lastDate) + ')');
     
     // Create SVG
-    const containerWidth = container.node().getBoundingClientRect().width || 800;
-    const width = containerWidth;
-    const height = 450;
-    const margin = { top: 20, right: 120, bottom: 60, left: 120 };
+    const containerWidth = container.node().getBoundingClientRect().width || 1000;
+    const width = containerWidth+150;
+    const height = 120 + rows.length * 45;
+    const margin = { top: 30, right: 250, bottom: 80, left: 140 };
     
     const svg = container.append('svg')
         .attr('width', width)
@@ -261,68 +300,89 @@ function createStackedBarChart(containerSelector, data) {
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
     
-    // Define dose types and colors (ECDC-style) - showing coverage as non-stacked bars
-    const doseTypes = [
-        { key: 'FirstDose', label: '1st Dose', color: '#4A90E2' },
-        { key: 'SecondDose', label: '2nd Dose', color: '#7B68EE' },
-        { key: 'DoseAdditional1', label: '1st Booster', color: '#50C878' },
-        { key: 'DoseAdditional2', label: '2nd Booster', color: '#FFB347' }
-    ];
+    // Keys ordered: vaccinated categories first, unvaccinated last (on top)
+    const keys = ["FullVacc", "Booster1", "Booster2", "Booster3", "Unvaccinated"];
     
-    // Don't stack - show max value per age group (each dose type is independent %)
-    // Cap all values at 100%
-    chartData.forEach(d => {
-        d.FirstDose = Math.min(d.FirstDose, 100);
-        d.SecondDose = Math.min(d.SecondDose, 100);
-        d.DoseAdditional1 = Math.min(d.DoseAdditional1, 100);
-        d.DoseAdditional2 = Math.min(d.DoseAdditional2, 100);
-        d.DoseAdditional3 = Math.min(d.DoseAdditional3, 100);
-        d.DoseAdditional4Plus = Math.min(d.DoseAdditional4Plus, 100);
-    });
+    const colors = {
+        Unvaccinated: "#d1d5db",
+        FullVacc: "#4ade80",
+        Booster1: "#a3e635",
+        Booster2: "#facc15",
+        Booster3: "#b45309"
+    };
     
-    // Scales
-    const x = d3.scaleLinear()
-        .domain([0, 100])
-        .range([0, chartWidth]);
+    const labelMap = {
+        Unvaccinated: "Unvaccinated",
+        FullVacc: "Fully Vaccinated",
+        Booster1: "1st Booster",
+        Booster2: "2nd Booster",
+        Booster3: "3rd+ Booster"
+    };
     
+    const stack = d3.stack().keys(keys);
+    const stackedData = stack(rows);
+    
+    const x = d3.scaleLinear().domain([0, 100]).range([0, chartWidth]);
     const y = d3.scaleBand()
-        .domain(chartData.map(d => d.ageGroup))
+        .domain(rows.map(d => d.age))
         .range([0, chartHeight])
-        .padding(0.3);
+        .padding(0.2);
     
-    const subY = d3.scaleBand()
-        .domain(doseTypes.map(d => d.key))
-        .range([0, y.bandwidth()])
-        .padding(0.05);
+    // Create tooltip div if it doesn't exist
+    let tooltip = d3.select("#age-group-tooltip");
+    if (tooltip.empty()) {
+        tooltip = d3.select("body").append("div")
+            .attr("id", "age-group-tooltip")
+            .style("position", "absolute")
+            .style("pointer-events", "none")
+            .style("background", "rgba(17, 24, 39, 0.95)")
+            .style("color", "#e5e7eb")
+            .style("padding", "10px 14px")
+            .style("border-radius", "8px")
+            .style("border", "1px solid #4b5563")
+            .style("font-size", "13px")
+            .style("line-height", "1.6")
+            .style("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.4)")
+            .style("opacity", 0)
+            .style("transition", "opacity 0.2s")
+            .style("z-index", "1000");
+    }
     
-    // Color scale
-    const colorMap = {};
-    doseTypes.forEach(d => colorMap[d.key] = d.color);
-    
-    // Draw grouped bars (one group per age group, bars side-by-side for each dose type)
-    const ageGroupsG = g.selectAll('.age-group')
-        .data(chartData)
-        .enter().append('g')
-        .attr('class', 'age-group')
-        .attr('transform', d => `translate(0, ${y(d.ageGroup)})`);
-    
-    ageGroupsG.selectAll('rect')
-        .data(d => doseTypes.map(type => ({
-            key: type.key,
-            value: d[type.key],
-            ageGroup: d.ageGroup
-        })))
-        .enter().append('rect')
-        .attr('y', d => subY(d.key))
-        .attr('x', 0)
-        .attr('width', 0)
-        .attr('height', subY.bandwidth())
-        .attr('fill', d => colorMap[d.key])
-        .attr('rx', 3)
-        .transition()
-        .duration(800)
-        .delay((d, i) => i * 50)
-        .attr('width', d => x(d.value));
+    // Draw layers + add tooltip listeners
+    g.selectAll("g.layer")
+        .data(stackedData)
+        .enter()
+        .append("g")
+        .attr("class", "layer")
+        .attr("fill", d => colors[d.key])
+        .selectAll("rect")
+        .data(d => d)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d[0]))
+        .attr("y", d => y(d.data.age))
+        .attr("width", d => x(d[1]) - x(d[0]))
+        .attr("height", y.bandwidth())
+        .attr("rx", 4)
+        .on("mousemove", function (event, d) {
+            const key = this.parentNode.__data__.key;
+            const valuePct = (d[1] - d[0]).toFixed(2);
+            
+            tooltip
+                .style("opacity", 1)
+                .html(`
+                    <div style="margin-bottom: 6px;"><b>${AGE_LABELS[d.data.age] || d.data.age}</b></div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="color:${colors[key]}; font-size: 16px;">■</span>
+                        <span><b>${labelMap[key]}:</b> ${valuePct}%</span>
+                    </div>
+                `)
+                .style("left", event.pageX + 12 + "px")
+                .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseleave", function () {
+            tooltip.style("opacity", 0);
+        });
     
     // Add axes
     const xAxis = d3.axisBottom(x)
@@ -330,7 +390,7 @@ function createStackedBarChart(containerSelector, data) {
         .tickFormat(d => d + '%');
     
     const yAxis = d3.axisLeft(y)
-        .tickFormat(d => formatAgeGroup(d));
+        .tickFormat(d => AGE_LABELS[d] || d);
     
     g.append('g')
         .attr('transform', `translate(0,${chartHeight})`)
@@ -338,23 +398,23 @@ function createStackedBarChart(containerSelector, data) {
         .style('color', '#c4b5fd')
         .selectAll('text')
         .style('fill', '#c4b5fd')
-        .style('font-size', '11px');
+        .style('font-size', '13px');
     
     g.append('g')
         .call(yAxis)
         .style('color', '#c4b5fd')
         .selectAll('text')
         .style('fill', '#c4b5fd')
-        .style('font-size', '11px')
+        .style('font-size', '14px')
         .style('font-weight', '500');
     
     // Axis labels
     g.append('text')
         .attr('x', chartWidth / 2)
-        .attr('y', chartHeight + 50)
+        .attr('y', chartHeight + 60)
         .style('text-anchor', 'middle')
         .style('fill', '#a78bfa')
-        .style('font-size', '12px')
+        .style('font-size', '14px')
         .style('font-weight', '600')
         .text('Vaccine Uptake (%)');
     
@@ -363,30 +423,38 @@ function createStackedBarChart(containerSelector, data) {
         .attr('class', 'legend')
         .attr('transform', `translate(${chartWidth + 20}, 0)`);
     
-    doseTypes.forEach((dose, i) => {
+    keys.forEach((key, i) => {
         const legendRow = legend.append('g')
-            .attr('transform', `translate(0, ${i * 25})`);
+            .attr('transform', `translate(0, ${i * 26})`);
         
         legendRow.append('rect')
-            .attr('width', 18)
-            .attr('height', 18)
+            .attr('width', 20)
+            .attr('height', 20)
             .attr('rx', 3)
-            .attr('fill', dose.color);
+            .attr('fill', colors[key]);
         
         legendRow.append('text')
-            .attr('x', 24)
-            .attr('y', 14)
-            .style('fill', '#e0d5ff')
-            .style('font-size', '11px')
-            .text(dose.label);
+            .attr('x', 26)
+            .attr('y', 15)
+            .style('fill', '#e5e7eb')
+            .style('font-size', '13px')
+            .text(labelMap[key]);
+    });
+    
+    // Add resize listener for stacked bar chart
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            console.log('🔄 Window resized - re-rendering stacked bar chart...');
+            createStackedBarChart(containerSelector, data);
+        }, 250);
     });
 }
 
 // Create cumulative line chart
-function createCumulativeLineChart(containerSelector, data) {
-    console.log("📈 Creating cumulative line chart by age group...");
-    
-    // Get D3 selection - handle both string selector and D3 selection object
+function createCumulativeLineChart(containerSelector, data, country = 'AT') {
+
     const container = typeof containerSelector === 'string' 
         ? d3.select(containerSelector) 
         : containerSelector;
@@ -396,21 +464,33 @@ function createCumulativeLineChart(containerSelector, data) {
         return;
     }
     
-    // Add title and controls container
+    // Clear existing content
+    container.html('');
+    
+    // Country name mapping
+    const countryNames = {
+        'AT': 'Austria', 'BE': 'Belgium', 'CY': 'Cyprus', 'CZ': 'Czechia', 'DE': 'Germany',
+        'DK': 'Denmark', 'EE': 'Estonia', 'EL': 'Greece', 'ES': 'Spain', 'FI': 'Finland',
+        'FR': 'France', 'HR': 'Croatia', 'HU': 'Hungary', 'IE': 'Ireland', 'IS': 'Iceland',
+        'IT': 'Italy', 'LI': 'Liechtenstein', 'LT': 'Lithuania', 'LU': 'Luxembourg', 'LV': 'Latvia',
+        'MT': 'Malta', 'NL': 'Netherlands', 'NO': 'Norway', 'PL': 'Poland', 'PT': 'Portugal',
+        'RO': 'Romania', 'SE': 'Sweden', 'SI': 'Slovenia', 'SK': 'Slovakia', 'EU': 'European Union'
+    };
+    
+    // Add title
+    container.append('h3')
+        .style('text-align', 'center')
+        .style('color', '#a78bfa')
+        .style('margin-bottom', '10px')
+        .style('font-size', '18px')
+        .text(`Cumulative Vaccination Coverage - ${countryNames[country] || country}`);
+    
     const headerDiv = container.append('div')
         .style('display', 'flex')
-        .style('justify-content', 'space-between')
+        .style('justify-content', 'center')
         .style('align-items', 'center')
         .style('margin-bottom', '15px');
-    
-    headerDiv.append('div')
-        .style('color', '#c4b5fd')
-        .style('font-size', '16px')
-        .style('font-weight', '600')
-        .style('text-align', 'left')
-        .text('📈 Cumulative Vaccination by Age Group');
-    
-    // Add vaccine type selector buttons
+
     const buttonsDiv = headerDiv.append('div')
         .style('display', 'flex')
         .style('gap', '8px');
@@ -426,7 +506,7 @@ function createCumulativeLineChart(containerSelector, data) {
     
     // Create SVG container first (will be updated)
     const containerWidth = container.node().getBoundingClientRect().width || 650;
-    const width = containerWidth - 20;
+    const width = containerWidth + 200 ;
     const height = 450;
     
     const svgContainer = container.append('div')
@@ -481,7 +561,7 @@ function createCumulativeLineChart(containerSelector, data) {
         });
         
         // Create SVG
-        const margin = { top: 20, right: 150, bottom: 60, left: 80 };
+        const margin = { top: 20, right: 150, bottom: 90, left: 80 };
         
         const svg = svgContainer.append('svg')
             .attr('width', width)
@@ -558,10 +638,10 @@ function createCumulativeLineChart(containerSelector, data) {
         // Add axes
         const xAxis = d3.axisBottom(x)
             .ticks(6)
-            .tickFormat(d3.timeFormat('%b %Y'));
+            .tickFormat(d3.timeFormat('%m/%y'));
         
         const yAxis = d3.axisLeft(y)
-            .ticks(4)
+            .ticks(5)
             .tickFormat(d => d >= 1000000 ? (d / 1000000).toFixed(1) + 'M' : 
                             d >= 1000 ? (d / 1000).toFixed(0) + 'K' : d);
         
@@ -570,9 +650,9 @@ function createCumulativeLineChart(containerSelector, data) {
             .call(xAxis)
             .style('color', '#c4b5fd')
             .selectAll('text')
-            .style('fill', '#c4b5fd')
-            .style('font-size', '11px')
-            .attr('transform', 'rotate(-45)')
+            .style('fill', '#ffffff')
+            .style('font-size', '10px')
+            .style('font-weight', '700')
             .style('text-anchor', 'end');
         
         g.append('g')
@@ -580,7 +660,13 @@ function createCumulativeLineChart(containerSelector, data) {
             .style('color', '#c4b5fd')
             .selectAll('text')
             .style('fill', '#c4b5fd')
-            .style('font-size', '11px');
+            .style('font-size', '12px')
+            .style('font-weight', '500');
+        
+        // Style axis lines and ticks
+        g.selectAll('.domain, .tick line')
+            .style('stroke', '#a78bfa')
+            .style('stroke-width', '1.5');
         
         // Axis labels
         g.append('text')
@@ -674,6 +760,16 @@ function createCumulativeLineChart(containerSelector, data) {
     
     // Render initial chart
     renderChart(selectedVaccineType);
+    
+    // Add resize listener
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            console.log('🔄 Window resized - re-rendering cumulative line chart...');
+            renderChart(selectedVaccineType);
+        }, 250);
+    });
 }
 
 // Create stacked bar chart for EU-wide median data
