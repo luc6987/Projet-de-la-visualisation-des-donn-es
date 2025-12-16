@@ -444,23 +444,23 @@ function createPyramidChart(vaccineType = 'complete') {
         );
     
     // Axes
-    const xAxis = d3.axisBottom(x)
-        .ticks(8)
-        .tickFormat(d => showDepartements ? Math.abs(d / 1e3).toFixed(0) + 'K' : Math.abs(d / 1e6).toFixed(1) + 'M');
+    // const xAxis = d3.axisBottom(x)
+    //     .ticks(8)
+    //     .tickFormat(d => showDepartements ? Math.abs(d / 1e3).toFixed(0) + 'K' : Math.abs(d / 1e6).toFixed(1) + 'M');
     
-    const xAxisGroup = g.selectAll('.x-axis')
-        .data([null])
-        .join('g')
-        .attr('class', 'x-axis')
-        .attr('transform', `translate(0,${height - margin.top - margin.bottom})`);
+    // const xAxisGroup = g.selectAll('.x-axis')
+    //     .data([null])
+    //     .join('g')
+    //     .attr('class', 'x-axis')
+    //     .attr('transform', `translate(0,${height - margin.top - margin.bottom})`);
     
-    xAxisGroup.transition()
-        .duration(600)
-        .call(xAxis);
+    // xAxisGroup.transition()
+    //     .duration(600)
+    //     .call(xAxis);
     
-    xAxisGroup.selectAll('text')
-        .style('fill', '#e0d5ff')
-        .style('font-size', '12px');
+    // xAxisGroup.selectAll('text')
+    //     .style('fill', '#e0d5ff')
+    //     .style('font-size', '12px');
     
     const yAxisGroup = g.selectAll('.y-axis')
         .data([null])
@@ -480,7 +480,6 @@ function createPyramidChart(vaccineType = 'complete') {
     g.selectAll('.domain, .tick line')
         .style('stroke', 'rgba(167, 139, 250, 0.3)');
     
-    // Gradients (create only once)
     let defs = svg.select('defs');
     if (defs.empty()) {
         defs = svg.append('defs');
@@ -667,55 +666,43 @@ async function initDashboard() {
     createPyramidChart('complete');
     updateStatistics();
     
-    // Setup vaccine type buttons
     setupVaccineTypeButtons();
     
-    // Listen for region changes from age_vaccin_fr.js
     window.addEventListener('regionChanged', (event) => {
         selectedRegionCode = event.detail.regionCode;
         console.log(`👥 Gender chart: Region changed to ${selectedRegionCode === 'all' ? 'All Regions' : regionNames[selectedRegionCode]}`);
         
-        // Get the currently selected vaccine type
         const activeBtn = document.querySelector('.vaccine-btn.active');
         const vaccineType = activeBtn ? activeBtn.dataset.type : 'complete';
         
-        // Re-render charts
         createPyramidChart(vaccineType);
         updateStatistics();
     });
     
-    // Listen for year range changes from the map
     document.addEventListener('yearRangeChanged', (event) => {
         selectedYearRange = event.detail.yearRange;
         console.log(`📅 Gender chart: Year range changed to ${selectedYearRange}`);
         
-        // Get the currently selected vaccine type
         const activeBtn = document.querySelector('.vaccine-btn.active');
         const vaccineType = activeBtn ? activeBtn.dataset.type : 'complete';
         
-        // Re-render charts
         createPyramidChart(vaccineType);
         updateStatistics();
     });
     
-    // Add resize listener for responsive chart
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
             console.log('🔄 Window resized - re-rendering gender pyramid chart');
             
-            // Get the currently selected vaccine type
             const activeBtn = document.querySelector('.vaccine-btn.active');
             const vaccineType = activeBtn ? activeBtn.dataset.type : 'complete';
             
-            // Re-render the pyramid chart
             createPyramidChart(vaccineType);
         }, 250);
     });
 }
-
-// Initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDashboard);
 } else {

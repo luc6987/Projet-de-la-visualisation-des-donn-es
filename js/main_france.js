@@ -12,17 +12,14 @@ function parseYearWeek(yearWeek) {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 France Regional Analysis page loaded');
     
-    // Initialize France map
     console.log('🗺️ Initializing France map...');
-    // Import and initialize map_france.js
     let highlightRegionFunc = null;
     try {
-        const { drawFranceMap, highlightRegion } = await import('./map_france.js?v=18');
+        const { drawFranceMap, highlightRegion } = await import('./map_france.js?v=42');
         drawFranceMap('#mapArea');
         highlightRegionFunc = highlightRegion;
         console.log('✅ France map initialized');
         
-        // Highlight default region (all regions)
         highlightRegion('all');
     } catch (error) {
         console.error('❌ Failed to initialize France map:', error);

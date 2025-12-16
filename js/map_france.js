@@ -4,6 +4,9 @@ const mapContext = {
     height: window.innerHeight * 0.8 - 100,
     selectedRegion: null,
     selectedRegionCode: null, 
+    highlightedRegionCode: 'all',
+    highlightedDepartements: null,
+    refreshVaccineTypeView: null,
     allRegionsData: null,
     allBoundariesData: null,
     nuts2RegionsData: null,
@@ -42,16 +45,16 @@ const vaccineTypeNames = {
 // Color palette for vaccine types (11 distinct colors)
 const vaccineColors = {
     '0': '#808080',  // Gray for "All vaccines"
-    '1': '#1f77b4',  // Blue - Pfizer adult
+    '1': '#3003e4ff',  // Blue - Pfizer adult
     '2': '#ff7f0e',  // Orange - Moderna
-    '3': '#2ca02c',  // Green - AstraZeneca
+    '3': '#ee06d7ff',  // Green - AstraZeneca
     '4': '#d62728',  // Red - Janssen
     '5': '#9467bd',  // Purple - Pfizer child
     '6': '#8c564b',  // Brown - Novavax
     '9': '#e377c2',  // Pink - Moderna Bivalent
     '10': '#7f7f7f', // Gray - Sanofi
     '11': '#bcbd22', // Yellow-green - Pfizer pediatric
-    '12': '#17becf'  // Cyan - Moderna BA.5
+    '12': '#330cf5ff'  // Cyan - Moderna BA.5
 };
 
 const vaccineColorScale = d3.scaleOrdinal()
@@ -100,7 +103,39 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         const rect = containerNode.getBoundingClientRect();
         mapContext.width = rect.width || mapContext.width;
         mapContext.height = rect.height || mapContext.height;
-        console.log(`📐 Map dimensions: ${mapContext.width}x${mapContext.height}`);
+    }
+
+    function getSelectionDeptIds() {
+        if (Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.length) {
+            return mapContext.highlightedDepartements;
+        }
+        if (mapContext.selectedRegionCode) {
+            return [mapContext.selectedRegionCode];
+        }
+        return null;
+    }
+
+    function getSelectedSimpleDepCodes(selectionDeptIds) {
+        return new Set(
+            (selectionDeptIds || [])
+                .map(id => getNutsToDepCode()[id])
+                .filter(Boolean)
+        );
+    }
+
+    function isJourInSelectedYearRange(jour, yearRange) {
+        if (yearRange === 'all') return true;
+        if (!jour) return false;
+        const year = parseInt(String(jour).split('-')[0]);
+        if (yearRange === '2020-2021') return year >= 2020 && year <= 2021;
+        if (yearRange === '2021-2022') return year >= 2021 && year <= 2022;
+        if (yearRange === '2022-2023') return year >= 2022 && year <= 2023;
+        return false;
+    }
+
+    function filterBySelectedYearRange(records, yearRange) {
+        if (yearRange === 'all') return records;
+        return (records || []).filter(rec => isJourInSelectedYearRange(rec?.jour, yearRange));
     }
 
     // Add vaccine type selection buttons
@@ -157,7 +192,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
 
 
                 mapContext.selectedVaccineType = vaccineType.id;
-                console.log(`💉 Vaccine type changed to: ${vaccineType.label}`);
                 
                 // Re-render dots with transition
                 if (mapContext.showDots) {
@@ -228,7 +262,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                     .style('background', 'rgba(0, 102, 255, 0.3)');
 
                 mapContext.selectedYearRange = yearRange.id;
-                console.log(`📅 Year range changed to: ${yearRange.label}`);
                 
                 // Dispatch event for other visualizations
                 const event = new CustomEvent('yearRangeChanged', {
@@ -306,7 +339,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                     .style('background', 'rgba(50, 205, 50, 0.3)');
 
                 mapContext.showByVaccineType = (mode.id === 'vaccine-type');
-                console.log(`🎨 Visualization mode changed to: ${mode.label}`);
                 
                 // Toggle visibility of vaccine type controls
                 vaccineControlsDiv.style('opacity', mapContext.showByVaccineType ? '0' : '1');
@@ -410,13 +442,13 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         .style('border', '2px solid rgba(167, 255, 139, 0.6)')
         .style('max-width', '100%');
 
-    vaccineInfoPanel.append('div')
+    const vaccineInfoTitle = vaccineInfoPanel.append('div')
         .style('text-align', 'center')
         .style('margin-bottom', '12px')
         .style('font-weight', 'bold')
         .style('font-size', '14px')
         .style('color', '#a7ff8b')
-        .text('Vaccine Type Color Guide');
+        .text('Top 3 Most Used Vaccine Types');
 
     const vaccineGrid = vaccineInfoPanel.append('div')
         .style('display', 'grid')
@@ -424,23 +456,66 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         .style('gap', '10px')
         .style('margin-top', '10px');
 
-    // Add vaccine type items (excluding "0" - Tous vaccins)
-    Object.entries(vaccineTypeNames)
-        .filter(([id]) => id !== '0')
-        .forEach(([vaccineId, vaccineName]) => {
+    function updateVaccineInfoPanel() {
+        vaccineGrid.selectAll('*').remove();
+
+        if (!mapContext.vaccinationData) return;
+
+        // Same selection precedence as the dot distribution:
+        // highlighted region (dropdown) > clicked département > all France.
+        const selectionDeptIds = getSelectionDeptIds();
+        const selectedSimpleDepCodes = getSelectedSimpleDepCodes(selectionDeptIds);
+
+        const yearRange = mapContext.selectedYearRange || 'all';
+        const totals = {};
+
+        mapContext.vaccinationData.forEach(rec => {
+            const vaccineId = String(rec.vaccin);
+            if (vaccineId === '0') return;
+
+            if (selectedSimpleDepCodes.size > 0 && !selectedSimpleDepCodes.has(rec.dep)) return;
+
+            if (!isJourInSelectedYearRange(rec.jour, yearRange)) return;
+
+            if (!totals[vaccineId]) totals[vaccineId] = 0;
+            totals[vaccineId] += (+rec.n_dose1 || 0) + (+rec.n_dose2 || 0) + (+rec.n_rappel || 0) + (+rec.n_2_rappel || 0);
+        });
+
+        const top3Ids = Object.entries(totals)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([id]) => id);
+
+        const scopeLabel = selectionDeptIds ? ' (Selected Area)' : ' (France)';
+        vaccineInfoTitle.text('Top 3 Most Used Vaccine Types' + scopeLabel);
+
+        if (top3Ids.length === 0) {
+            vaccineGrid.append('div')
+                .style('grid-column', '1 / -1')
+                .style('text-align', 'center')
+                .style('font-size', '12px')
+                .style('color', '#e6ffe6')
+                .text('No vaccine data available for this selection.');
+            return;
+        }
+
+        top3Ids.forEach(vaccineId => {
+            const vaccineName = vaccineTypeNames[vaccineId] || `Vaccine ${vaccineId}`;
+            const color = vaccineColors[vaccineId] || vaccineColorScale(vaccineId);
+
             const item = vaccineGrid.append('div')
                 .style('display', 'flex')
                 .style('align-items', 'center')
                 .style('padding', '8px 12px')
                 .style('background', 'rgba(255, 255, 255, 0.05)')
                 .style('border-radius', '6px')
-                .style('border', `1px solid ${vaccineColors[vaccineId]}30`);
+                .style('border', `1px solid ${color}30`);
 
             item.append('div')
                 .style('width', '14px')
                 .style('height', '14px')
                 .style('border-radius', '50%')
-                .style('background', vaccineColors[vaccineId])
+                .style('background', color)
                 .style('border', '2px solid rgba(255, 255, 255, 0.5)')
                 .style('margin-right', '10px')
                 .style('flex-shrink', '0');
@@ -451,11 +526,11 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                 .style('line-height', '1.3')
                 .text(vaccineName);
         });
+    }
 
-    // Store reference for updates
     mapContext.vaccineInfoPanel = vaccineInfoPanel;
+    mapContext.refreshVaccineInfoPanel = updateVaccineInfoPanel;
 
-    // Create SVG container
     const svg = container
         .append('svg')
         .attr('width', '100%')
@@ -465,7 +540,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         .style('background', 'transparent')
         .style('background', 'transparent');
 
-    // Decorative defs for glows and shadows
     const defs = svg.append('defs');
 
     const glowFilter = defs.append('filter')
@@ -483,14 +557,12 @@ export function drawFranceMap(containerSelector = '#franceMap') {
     feMerge.append('feMergeNode').attr('in', 'coloredBlur');
     feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 
-    // Create groups for layers
     const mapGroup = svg.append('g').attr('class', 'map-group');
     const regionsGroup = mapGroup.append('g').attr('class', 'regions');
     const boundariesGroup = mapGroup.append('g').attr('class', 'boundaries');
     const dotsGroup = mapGroup.append('g').attr('class', 'dots');
     const labelsGroup = mapGroup.append('g').attr('class', 'labels');
 
-    // Create tooltip
     const tooltip = d3.select('body')
         .append('div')
         .attr('class', 'map-tooltip')
@@ -518,23 +590,19 @@ export function drawFranceMap(containerSelector = '#franceMap') {
     mapContext.labelsGroup = labelsGroup;
     mapContext.zoom = zoom;
 
-    // Load the GeoJSON data and vaccination data
     Promise.all([
         d3.json('data/nutsrg.geojson'),
         d3.json('data/nutsbn.geojson'),
         d3.json('data/regions.geojson'),
         d3.dsv(';', 'data/vacsi-v-dep-2023-07-13-15h51.csv')
     ]).then(([regionsData, boundariesData, nuts2RegionsData, vaccinationData]) => {
-        console.log('GeoJSON data loaded successfully');
-        console.log('Vaccination data loaded:', vaccinationData.length, 'records');
+        // Data loaded
         
-        // Store data in context
         mapContext.allRegionsData = regionsData;
         mapContext.allBoundariesData = boundariesData;
         mapContext.vaccinationData = vaccinationData;
         mapContext.nuts2RegionsData = nuts2RegionsData;
 
-        // Initial render
         updateMapLevel();
     })
     .catch(error => {
@@ -614,30 +682,22 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                 });
             }
         }
-        
 
-        if (dots.length < numDots * 0.5 && numDots > 10) {
-            console.warn(`Low dot generation for ${feature.properties.id} (${feature.properties.na}): ${dots.length}/${numDots} dots after ${attempts} attempts`);
-        }
         
         return dots;
     }
     
     function isPointInPath(x, y, pathString, feature, path) {
         const projection = path.projection();
-        
         const scale = projection.scale();
         const translate = projection.translate();
-        
         const geoX = (x - translate[0]) / scale;
         const geoY = (translate[1] - y) / scale; 
-        
         return testPointInFeature(geoX, geoY, feature);
     }
     
     function testPointInFeature(x, y, feature) {
         const geometry = feature.geometry;
-        
         if (geometry.type === 'Polygon') {
             return pointInPolygon([x, y], geometry.coordinates);
         } else if (geometry.type === 'MultiPolygon') {
@@ -654,10 +714,8 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
             const [xi, yi] = ring[i];
             const [xj, yj] = ring[j];
-            
             const intersect = ((yi > y) !== (yj > y)) &&
                 (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-            
             if (intersect) inside = !inside;
         }
         
@@ -694,30 +752,11 @@ export function drawFranceMap(containerSelector = '#franceMap') {
     function getVaccinationIntensity(depCode) {
         if (!mapContext.vaccinationData) return 0;
         const simpleDepCode = getNutsToDepCode()[depCode];
-        if (!simpleDepCode) {
-            console.warn(`No mapping found for NUTS code: ${depCode}`);
-            return 0;
-        }
+        if (!simpleDepCode) return 0;
         
         let depData = mapContext.vaccinationData.filter(d => d.dep === simpleDepCode);
         const yearRange = mapContext.selectedYearRange || 'all';
-        if (yearRange !== 'all' && depData.length > 0) {
-            depData = depData.filter(d => {
-                if (!d.jour) return false;
-                
-                const dateParts = d.jour.split('-');
-                const year = parseInt(dateParts[0]);
-                if (yearRange === '2020-2021') {
-                    return year >= 2020 && year <= 2021;
-                } else if (yearRange === '2021-2022') {
-                    return year >= 2021 && year <= 2022;
-                } else if (yearRange === '2022-2023') {
-                    return year >= 2022 && year <= 2023;
-                }
-                
-                return false;
-            });
-        }
+        depData = filterBySelectedYearRange(depData, yearRange);
 
         const vaccineType = mapContext.selectedVaccineType || 'all';
         const byVaccine = d3.group(depData, d => d.vaccin);
@@ -763,23 +802,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
             return getVaccinationIntensity(depCode);
         });
         const maxIntensity = d3.max(intensities) || 1;
-        const totalIntensity = d3.sum(intensities);
-        let targetDotsTotal;
-        const vaccineType = mapContext.selectedVaccineType || 'all';
-        
-        if (vaccineType === 'all') {
-            targetDotsTotal = 7000; // All doses combined - most dots
-        } else if (vaccineType === 'dose1') {
-            targetDotsTotal = 6000; // First dose - high coverage
-        } else if (vaccineType === 'dose2') {
-            targetDotsTotal = 4000; // Second dose - slightly less
-        } else if (vaccineType === 'rappel') {
-            targetDotsTotal = 2000; // Booster - fewer people
-        } else if (vaccineType === '2_rappel') {
-            targetDotsTotal = 800; // Second booster - much fewer
-        } else {
-            targetDotsTotal = 5000;
-        }
         
         const vaccinationsPerDot = 27000;
         
@@ -794,37 +816,75 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         const dotRadius = 2;
         
         const allDots = [];
-        let totalDotsGenerated = 0;
-        let deptsWithNoDots = [];
+        
+        // If a region is highlighted (dropdown) or a single département is selected (click),
+        // restrict the vaccine-type distribution to that selection.
+        const selectionDeptIds = Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.length
+            ? mapContext.highlightedDepartements
+            : (mapContext.selectedRegionCode ? [mapContext.selectedRegionCode] : null);
+
+        const selectionDeptIdSet = Array.isArray(selectionDeptIds) ? new Set(selectionDeptIds) : null;
+        const getDotOpacity = (dot) => {
+            if (!selectionDeptIdSet) return 0.8;
+            return selectionDeptIdSet.has(dot.depId) ? 0.85 : 0.12;
+        };
+
+        // We compute the top-3 vaccine types from the current selection (if any),
+        // but we keep rendering dots across all départements so other areas don't disappear.
+        const selectedFeatures = selectionDeptIds
+            ? franceRegions.features.filter(f => f?.properties?.id && selectionDeptIds.includes(f.properties.id))
+            : franceRegions.features;
+
+        const featuresToRender = franceRegions.features;
+
+        // Calculate top 3 vaccine types *within the current selection* (or globally if none)
+        let top3VaccineTypes = [];
+        if (mapContext.showByVaccineType && mapContext.vaccinationData) {
+            const yearRange = mapContext.selectedYearRange || 'all';
+            const selectedSimpleDepCodes = new Set(
+                selectedFeatures
+                    .map(f => getNutsToDepCode()[f.properties.id])
+                    .filter(Boolean)
+            );
+
+            const allVaccineTotals = {};
+            mapContext.vaccinationData.forEach(rec => {
+                const vaccineId = String(rec.vaccin);
+                if (vaccineId === '0') return;
+
+                // If we have an active selection, only count rows inside it
+                if (selectedSimpleDepCodes.size > 0 && !selectedSimpleDepCodes.has(rec.dep)) return;
+
+                // Apply same year-range filtering as the map
+                if (!isJourInSelectedYearRange(rec.jour, yearRange)) return;
+
+                if (!allVaccineTotals[vaccineId]) allVaccineTotals[vaccineId] = 0;
+                allVaccineTotals[vaccineId] += (+rec.n_dose1 || 0) + (+rec.n_dose2 || 0) + (+rec.n_rappel || 0) + (+rec.n_2_rappel || 0);
+            });
+
+            top3VaccineTypes = Object.entries(allVaccineTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([id]) => id);
+        }
         
         if (mapContext.showByVaccineType) {
-            franceRegions.features.forEach(feature => {
+            featuresToRender.forEach(feature => {
                 const depCode = feature.properties.id;
                 const simpleDepCode = getNutsToDepCode()[depCode];
                 if (!simpleDepCode) return;
                 
                 let depData = mapContext.vaccinationData.filter(d => d.dep === simpleDepCode);
                 const yearRange = mapContext.selectedYearRange || 'all';
-                if (yearRange !== 'all' && depData.length > 0) {
-                    depData = depData.filter(d => {
-                        if (!d.jour) return false;
-                        const dateParts = d.jour.split('-');
-                        const year = parseInt(dateParts[0]);
-                        if (yearRange === '2020-2021') {
-                            return year >= 2020 && year <= 2021;
-                        } else if (yearRange === '2021-2022') {
-                            return year >= 2021 && year <= 2022;
-                        } else if (yearRange === '2022-2023') {
-                            return year >= 2022 && year <= 2023;
-                        }
-                        return false;
-                    });
-                }
+                depData = filterBySelectedYearRange(depData, yearRange);
                 
                 const byVaccine = d3.group(depData, d => d.vaccin);
                 byVaccine.forEach((records, vaccineTypeId) => {
 
-                    if (vaccineTypeId === '0') return;
+                    const vaccineTypeIdStr = String(vaccineTypeId);
+                    if (vaccineTypeIdStr === '0') return;
+                    // Only show top 3 vaccine types (within selection)
+                    if (top3VaccineTypes.length > 0 && !top3VaccineTypes.includes(vaccineTypeIdStr)) return;
                     
                     let vaccineTotal = 0;
                     records.forEach(d => {
@@ -835,7 +895,7 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                     });
                     
                     if (vaccineTotal > 0) {
-                        const dots = generateDotsForDepartment(feature, vaccineTotal, path, vaccinationsPerDot, vaccineTypeId);
+                        const dots = generateDotsForDepartment(feature, vaccineTotal, path, vaccinationsPerDot, vaccineTypeIdStr);
                         if (dots.length === 0 && vaccineTotal > 0) {
                             const centroid = path.centroid(feature);
                             if (centroid && !isNaN(centroid[0]) && !isNaN(centroid[1])) {
@@ -844,11 +904,10 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                                     y: centroid[1],
                                     intensity: vaccineTotal,
                                     depId: feature.properties.id,
-                                    vaccineType: vaccineTypeId
+                                    vaccineType: vaccineTypeIdStr
                                 });
                             }
                         }
-                        totalDotsGenerated += dots.length;
                         allDots.push(...dots);
                     }
                 });
@@ -871,11 +930,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                     }
                 }
                 
-                if (dots.length === 0) {
-                    deptsWithNoDots.push(feature.properties.id + ' (' + feature.properties.na + ')');
-                }
-                
-                totalDotsGenerated += dots.length;
                 allDots.push(...dots);
             }
             });
@@ -894,7 +948,7 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                         .duration(600)
                         .delay((d, i) => (i % 100) * 1.5)
                         .attr('r', dotRadius)
-                        .attr('opacity', 0.8)
+                        .attr('opacity', d => getDotOpacity(d))
                     ),
                 update => update
                     .call(update => update.transition()
@@ -903,7 +957,7 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                         .attr('cy', d => d.y)
                         .attr('fill', d => mapContext.showByVaccineType ? vaccineColorScale(d.vaccineType) : colorScale(d.intensity))
                         .attr('r', dotRadius)
-                        .attr('opacity', 0.8)
+                        .attr('opacity', d => getDotOpacity(d))
                     ),
                 exit => exit
                     .call(exit => exit.transition()
@@ -963,6 +1017,7 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         franceRegions.features.forEach((feature, index) => {
             const regionFill = mapContext.showDots ? '#009c8c' : '#808080';
             const regionOpacity = mapContext.showDots ? 0.6 : 1;
+            const dimOpacity = Math.max(0.15, regionOpacity * 0.3);
             const idleStroke = 'rgba(234, 230, 230, 0.8)';
             const hoverStroke = '#a78bfa';
 
@@ -978,11 +1033,27 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                 .attr('opacity', regionOpacity)
                 .style('cursor', 'pointer')
                 .on('mouseover', function(event, d) {
-               
-                    d3.select(this)
-                        .attr('opacity', 1)
-                        .attr('stroke', hoverStroke)
-                        .attr('stroke-width', 2);
+
+                    const deptId = d?.properties?.id;
+                    const isClickedSelected = mapContext.selectedRegionCode === deptId;
+                    const isHighlighted = Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.includes(deptId);
+
+                    if (isClickedSelected) {
+                        d3.select(this)
+                            .attr('opacity', 1)
+                            .attr('stroke', '#ff0000')
+                            .attr('stroke-width', 3);
+                    } else if (isHighlighted) {
+                        d3.select(this)
+                            .attr('opacity', 1)
+                            .attr('stroke', '#ff0066')
+                            .attr('stroke-width', 4);
+                    } else {
+                        d3.select(this)
+                            .attr('opacity', 1)
+                            .attr('stroke', hoverStroke)
+                            .attr('stroke-width', 2);
+                    }
 
                     const regionName = d.properties.na || d.properties.id;
                     let tooltipContent = `
@@ -998,27 +1069,35 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                             let depData = mapContext.vaccinationData.filter(rec => rec.dep === simpleDepCode);
                             
                             const yearRange = mapContext.selectedYearRange || 'all';
-                            if (yearRange !== 'all' && depData.length > 0) {
-                                depData = depData.filter(rec => {
-                                    if (!rec.jour) return false;
-                                    const dateParts = rec.jour.split('-');
-                                    const year = parseInt(dateParts[0]);
-                                    
-                                    if (yearRange === '2020-2021') {
-                                        return year >= 2020 && year <= 2021;
-                                    } else if (yearRange === '2021-2022') {
-                                        return year >= 2021 && year <= 2022;
-                                    } else if (yearRange === '2022-2023') {
-                                        return year >= 2022 && year <= 2023;
-                                    }
-                                    return false;
-                                });
-                            }
+                            depData = filterBySelectedYearRange(depData, yearRange);
                             
                             const byVaccine = d3.group(depData, rec => rec.vaccin);
                             const vaccineTypeTotals = [];
+
+                            // Compute the top-3 vaccine types for the *current selection* (highlighted region
+                            // from the dropdown, or single clicked département). This keeps tooltip consistent
+                            // with the dot distribution on the map.
+                            const selectionDeptIds = getSelectionDeptIds();
+                            const selectedSimpleDepCodes = getSelectedSimpleDepCodes(selectionDeptIds);
+
+                            const selectionTotals = {};
+                            if (mapContext.vaccinationData) {
+                                mapContext.vaccinationData.forEach(rec => {
+                                    const vaccineId = String(rec.vaccin);
+                                    if (vaccineId === '0') return;
+                                    if (selectedSimpleDepCodes.size > 0 && !selectedSimpleDepCodes.has(rec.dep)) return;
+                                    if (!isJourInSelectedYearRange(rec.jour, yearRange)) return;
+                                    if (!selectionTotals[vaccineId]) selectionTotals[vaccineId] = 0;
+                                    selectionTotals[vaccineId] += (+rec.n_dose1 || 0) + (+rec.n_dose2 || 0) + (+rec.n_rappel || 0) + (+rec.n_2_rappel || 0);
+                                });
+                            }
+                            const selectionTop3Ids = Object.entries(selectionTotals)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 3)
+                                .map(([id]) => id);
                             
                             byVaccine.forEach((records, vaccineTypeId) => {
+                                const vaccineTypeIdStr = String(vaccineTypeId);
                                 let total = 0;
                                 records.forEach(rec => {
                                     total += (+rec.n_dose1 || 0) + 
@@ -1029,23 +1108,30 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                                 
                                 if (total > 0) {
                                     vaccineTypeTotals.push({
-                                        id: vaccineTypeId,
-                                        name: vaccineTypeNames[vaccineTypeId] || `Vaccine ${vaccineTypeId}`,
+                                        id: vaccineTypeIdStr,
+                                        name: vaccineTypeNames[vaccineTypeIdStr] || `Vaccine ${vaccineTypeIdStr}`,
                                         total: total,
-                                        color: vaccineColors[vaccineTypeId]
+                                        color: vaccineColors[vaccineTypeIdStr] || vaccineColorScale(vaccineTypeIdStr)
                                     });
                                 }
                             });
                             
-                            vaccineTypeTotals.sort((a, b) => b.total - a.total);
+                            // Keep tooltip aligned with the selected region's top-3 types.
+                            // If we can't compute a selection top-3 (no selection), fall back to the hovered dep top-3.
+                            const filteredTotals = selectionTop3Ids.length > 0
+                                ? vaccineTypeTotals.filter(vt => selectionTop3Ids.includes(String(vt.id)))
+                                : vaccineTypeTotals;
+
+                            filteredTotals.sort((a, b) => b.total - a.total);
+                            const top3Vaccines = filteredTotals.slice(0, 3);
                             
-                            if (vaccineTypeTotals.length > 0) {
+                            if (top3Vaccines.length > 0) {
                                 tooltipContent += `<br/>
                                     <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(167, 139, 250, 0.3);">
-                                        <span style="color: #a7ff8b; font-weight: bold; font-size: 11px;">Vaccinations by Type:</span><br/>
+                                        <span style="color: #a7ff8b; font-weight: bold; font-size: 11px;">Top 3 Vaccine Types:</span><br/>
                                 `;
                                 
-                                vaccineTypeTotals.forEach(vt => {
+                                top3Vaccines.forEach(vt => {
                                     tooltipContent += `
                                         <div style="display: flex; align-items: center; margin-top: 4px;">
                                             <div style="width: 10px; height: 10px; background: ${vt.color}; border-radius: 50%; margin-right: 6px; flex-shrink: 0;"></div>
@@ -1094,16 +1180,52 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                         .style('left', (event.pageX + 10) + 'px');
                 })
                 .on('mouseout', function(event, d) {
-                    d3.select(this)
-                        .attr('opacity', regionOpacity)
-                        .attr('stroke', idleStroke)
-                        .attr('stroke-width', mapContext.showDots ? 0.5 : 1.5);
+                    const deptId = d?.properties?.id;
+                    const isClickedSelected = mapContext.selectedRegionCode === deptId;
+                    const isHighlighted = Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.includes(deptId);
+                    const hasSelection = Boolean(mapContext.selectedRegionCode) || (Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.length > 0);
+
+                    if (isClickedSelected) {
+                        d3.select(this)
+                            .attr('opacity', 1)
+                            .attr('stroke', '#ff0000')
+                            .attr('stroke-width', 3);
+                    } else if (isHighlighted) {
+                        d3.select(this)
+                            .attr('opacity', 1)
+                            .attr('stroke', '#ff0066')
+                            .attr('stroke-width', 4);
+                    } else {
+                        d3.select(this)
+                            .attr('opacity', hasSelection ? dimOpacity : regionOpacity)
+                            .attr('stroke', idleStroke)
+                            .attr('stroke-width', mapContext.showDots ? 0.5 : 1.5);
+                    }
 
                     tooltip.style('visibility', 'hidden');
                 })
                 .on('click', function(event, d) {
                     event.stopPropagation();
-                    selectRegion(d, this);
+
+                    // Disable click-selection: do not select a single département.
+                    // If something was previously selected, clear it.
+                    if (mapContext.selectedRegionCode) {
+                        mapContext.selectedRegion = null;
+                        mapContext.selectedRegionCode = null;
+
+                        if (typeof mapContext.applySelectionEmphasis === 'function') {
+                            mapContext.applySelectionEmphasis();
+                        }
+
+                        // In vaccine-type mode, the top-3 computation may depend on selection,
+                        // so refresh dots/info panel after clearing.
+                        if (typeof mapContext.refreshVaccineTypeView === 'function') {
+                            mapContext.refreshVaccineTypeView();
+                        }
+                        if (typeof mapContext.refreshVaccineInfoPanel === 'function') {
+                            mapContext.refreshVaccineInfoPanel();
+                        }
+                    }
                 })
                 .transition()
                 .duration(750)
@@ -1171,16 +1293,24 @@ export function drawFranceMap(containerSelector = '#franceMap') {
         }
 
         function selectRegion(feature, element) {
-       
-            mapContext.regionsGroup.selectAll('path')
-                .attr('opacity', 0.7)
-                .attr('stroke-width', 1.5);
-            d3.select(element)
-                .attr('opacity', 1)
-                .attr('stroke-width', 2);
-
             mapContext.selectedRegion = feature;
             mapContext.selectedRegionCode = feature.properties.id; 
+
+            // Clicking a single area should override any multi-département highlight
+            mapContext.highlightedRegionCode = 'all';
+            mapContext.highlightedDepartements = null;
+
+            if (typeof mapContext.applySelectionEmphasis === 'function') {
+                mapContext.applySelectionEmphasis();
+            }
+
+            if (mapContext.showByVaccineType && typeof mapContext.refreshVaccineTypeView === 'function') {
+                mapContext.refreshVaccineTypeView();
+            }
+
+            if (typeof mapContext.refreshVaccineInfoPanel === 'function') {
+                mapContext.refreshVaccineInfoPanel();
+            }
     
             const event = new CustomEvent('regionSelected', {
                 detail: {
@@ -1191,23 +1321,86 @@ export function drawFranceMap(containerSelector = '#franceMap') {
             });
             document.dispatchEvent(event);
         }
+        // Allow external callers (e.g., highlightRegion from dropdown) to refresh dot distribution
+        mapContext.refreshVaccineTypeView = () => {
+            renderDotDensity(franceRegions, path);
+        };
+
+        const applySelectionEmphasis = () => {
+            const baseOpacity = mapContext.showDots ? 0.6 : 1;
+            const dimOpacity = Math.max(0.15, baseOpacity * 0.3);
+            const idleStroke = 'rgba(234, 230, 230, 0.8)';
+
+            const hasHighlight = Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.length > 0;
+            const hasSelected = Boolean(mapContext.selectedRegionCode);
+
+            const allPaths = mapContext.regionsGroup.selectAll('path');
+
+            if (!hasHighlight && !hasSelected) {
+                allPaths
+                    .attr('opacity', baseOpacity)
+                    .attr('fill-opacity', null)
+                    .attr('stroke', idleStroke)
+                    .attr('stroke-width', mapContext.showDots ? 0.5 : 1.5);
+            } else {
+                allPaths
+                    .attr('opacity', dimOpacity)
+                    .attr('fill-opacity', 0.2)
+                    .attr('stroke', idleStroke)
+                    .attr('stroke-width', mapContext.showDots ? 0.5 : 1.5);
+
+                if (hasHighlight) {
+                    allPaths
+                        .filter(d => d?.properties?.id && mapContext.highlightedDepartements.includes(d.properties.id))
+                        .attr('opacity', 1)
+                        .attr('fill-opacity', null)
+                        .attr('stroke', '#ff0066')
+                        .attr('stroke-width', 4)
+                        .raise();
+                }
+
+                if (hasSelected) {
+                    const selectedPath = allPaths
+                        .filter(d => d?.properties?.id === mapContext.selectedRegionCode);
+
+                    if (!selectedPath.empty()) {
+                        selectedPath
+                            .attr('opacity', 1)
+                            .attr('fill-opacity', null)
+                            .attr('stroke', '#ff0000')
+                            .attr('stroke-width', 3)
+                            .raise();
+                    }
+                }
+            }
+
+            const selectionDeptIds = Array.isArray(mapContext.highlightedDepartements) && mapContext.highlightedDepartements.length
+                ? mapContext.highlightedDepartements
+                : (mapContext.selectedRegionCode ? [mapContext.selectedRegionCode] : null);
+            const selectionDeptIdSet = Array.isArray(selectionDeptIds) ? new Set(selectionDeptIds) : null;
+
+            if (mapContext.dotsGroup) {
+                mapContext.dotsGroup.selectAll('circle')
+                    .transition()
+                    .duration(200)
+                    .attr('opacity', d => {
+                        if (!selectionDeptIdSet) return 0.8;
+                        return selectionDeptIdSet.has(d.depId) ? 0.85 : 0.12;
+                    });
+            }
+        };
+
+        mapContext.applySelectionEmphasis = applySelectionEmphasis;
+
         renderDotDensity(franceRegions, path);
 
-        if (mapContext.selectedRegionCode) {
-            const selectedPath = mapContext.regionsGroup.selectAll('path')
-                .filter(d => d.properties.id === mapContext.selectedRegionCode);
-            
-            if (!selectedPath.empty()) {
-                mapContext.regionsGroup.selectAll('path')
-                    .attr('opacity', mapContext.showDots ? 0.6 : 0.7)
-                    .attr('stroke-width', mapContext.showDots ? 0.5 : 1.5);
-                
-                selectedPath
-                    .attr('opacity', 1)
-                    .attr('stroke', '#a78bfa')
-                    .attr('stroke-width', 2);
-            
-            }
+        if (typeof mapContext.refreshVaccineInfoPanel === 'function') {
+            mapContext.refreshVaccineInfoPanel();
+        }
+
+        // Re-apply selection/highlight emphasis after redraws because updateMapLevel rebuilds paths.
+        if (typeof mapContext.applySelectionEmphasis === 'function') {
+            mapContext.applySelectionEmphasis();
         }
         addDotIntensityLegend(mapContext.svg, mapContext.width);
         addVaccineTypeLegend(mapContext.svg, mapContext.width, mapContext.height);
@@ -1237,7 +1430,26 @@ function addVaccineTypeLegend(svg, mapWidth, mapHeight) {
         .attr('id', 'vaccine-type-legend')
         .attr('transform', `translate(${legendX}, ${legendY})`)
         .style('display', 'none'); 
-    const vaccineTypes = Object.entries(vaccineTypeNames).filter(([id]) => id !== '0');
+    
+    // Calculate top 3 most used vaccine types
+    const allVaccineTotals = {};
+    if (mapContext.vaccinationData) {
+        mapContext.vaccinationData.forEach(rec => {
+            if (rec.vaccin === '0') return;
+            if (!allVaccineTotals[rec.vaccin]) {
+                allVaccineTotals[rec.vaccin] = 0;
+            }
+            allVaccineTotals[rec.vaccin] += (+rec.n_dose1 || 0) + (+rec.n_dose2 || 0) + (+rec.n_rappel || 0) + (+rec.n_2_rappel || 0);
+        });
+    }
+    
+    const top3VaccineIds = Object.entries(allVaccineTotals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(entry => entry[0]);
+    
+    const vaccineTypes = Object.entries(vaccineTypeNames)
+        .filter(([id]) => id !== '0' && top3VaccineIds.includes(id));
     const bgHeight = vaccineTypes.length * legendItemHeight + 45;
     
     legend.append('rect')
@@ -1255,7 +1467,7 @@ function addVaccineTypeLegend(svg, mapWidth, mapHeight) {
         .style('font-size', '13px')
         .style('font-weight', 'bold')
         .style('fill', '#a7ff8b')
-        .text('Vaccine Types');
+        .text('Top 3 Vaccine Types');
 
     vaccineTypes.forEach(([vaccineId, vaccineName], index) => {
         const itemY = 38 + index * legendItemHeight;
@@ -1395,42 +1607,24 @@ export function getSelectedRegion() {
 }
 
 export function highlightRegion(regionCode) {
-    const allRegions = d3.selectAll('.region');
-    allRegions
-        .attr('stroke', 'rgba(234, 230, 230, 0.8)')
-        .attr('stroke-width', mapContext.showDots ? 0.5 : 1.5)
-        .attr('opacity', mapContext.showDots ? 0.6 : 1)
-        .attr('fill-opacity', null);
+    mapContext.highlightedRegionCode = regionCode;
+    mapContext.highlightedDepartements = null;
+
     const departements = regionToDepartements[regionCode];
-    allRegions
-        .attr('opacity', 0.2)
-        .attr('fill-opacity', 0.2);
-    const highlighted = [];
-    allRegions.each(function(d) {
-        if (d && d.properties) {
-            const deptId = d.properties.id;
-            if (departements.includes(deptId)) {
-                highlighted.push(deptId);
-                d3.select(this)
-                    .attr('stroke', '#ff0066')  // Bright pink/red stroke
-                    .attr('stroke-width', 4)     // Thick border
-                    .attr('opacity', 1)          // Full opacity
-                    .attr('fill-opacity', 0.9)   // Bright fill
-                    .raise();                    // Bring to front
-            }
-        }
-    });
+    if (departements && Array.isArray(departements)) {
+        mapContext.highlightedDepartements = departements;
+    }
+
+    if (typeof mapContext.applySelectionEmphasis === 'function') {
+        mapContext.applySelectionEmphasis();
+    }
     
-    if (highlighted.length === 0) {
-        let sampleCount = 0;
-        allRegions.each(function(d) {
-            if (d && d.properties && d.properties.id && sampleCount < 10) {
-                console.log(`  Available: ${d.properties.id}`);
-                sampleCount++;
-            }
-        });
-    } else {
-        console.log(`🎉 SUCCESS! ${highlighted.length} départements should now be visible with pink borders`);
+    // If we're in vaccine-type view, refresh the dot layer to match the highlighted region
+    if (typeof mapContext.refreshVaccineTypeView === 'function') {
+        mapContext.refreshVaccineTypeView();
+    }
+    if (typeof mapContext.refreshVaccineInfoPanel === 'function') {
+        mapContext.refreshVaccineInfoPanel();
     }
 }
 
@@ -1439,7 +1633,6 @@ window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
         if (mapContext.svg && mapContext.containerSelector) {
-            console.log('🔄 Window resized - re-rendering France map');
             const container = d3.select(mapContext.containerSelector);
             container.selectAll('*').remove();
             
