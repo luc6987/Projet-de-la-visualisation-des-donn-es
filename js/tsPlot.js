@@ -1,10 +1,8 @@
 
-// Import data cleaning function that loads and processes vaccination data
 import { CleanVaccin } from './clean.js';
 
 console.log("✅ tsPlot.js loaded successfully!");
 
-// Country code to full name mapping for display purposes
 const countryNames = {
     'FR': 'France', 'DE': 'Germany', 'IT': 'Italy', 'ES': 'Spain',
     'PL': 'Poland', 'RO': 'Romania', 'NL': 'Netherlands', 'BE': 'Belgium',
@@ -15,8 +13,6 @@ const countryNames = {
     'CY': 'Cyprus', 'LU': 'Luxembourg', 'MT': 'Malta', 'IS': 'Iceland',
     'NO': 'Norway', 'LI': 'Liechtenstein'
 };
-
-// Dose type labels for display
 const doseLabels = {
     'FirstDose': 'First Dose',
     'SecondDose': 'Primary Course (2 doses)',
@@ -27,7 +23,6 @@ const doseLabels = {
     'DoseAdditional5': 'Fifth Booster'
 };
 
-// Color palette for countries (vibrant space theme)
 const countryColors = [
     '#00d4ff', '#ff00ff', '#00ff88', '#ff6b35', '#a855f7',
     '#fbbf24', '#f472b6', '#22d3ee', '#a3e635', '#fb923c',
@@ -36,7 +31,6 @@ const countryColors = [
 
 
 function processCountryData(data, countryCode) {
-    // Filter for the specified country, ALL target group, and NATIONAL total
     const countryData = data.filter(d => 
         d.ReportingCountry === countryCode &&
         d.TargetGroup === "ALL" &&
@@ -46,9 +40,7 @@ function processCountryData(data, countryCode) {
         console.warn(`No data found for country code: ${countryCode}`);
         return null;
     }
-    // Sort by date
     const sortedData = countryData.sort((a, b) => a.Date - b.Date);
-    // Aggregate by YearWeekISO (sum across vaccine types)
     const weeklyData = d3.rollup(
         sortedData,
         v => ({
@@ -59,15 +51,13 @@ function processCountryData(data, countryCode) {
             DoseAdditional3: d3.sum(v, d => +d.DoseAdditional3 || 0),
             DoseAdditional4: d3.sum(v, d => +d.DoseAdditional4 || 0),
             DoseAdditional5: d3.sum(v, d => +d.DoseAdditional5 || 0),
-            Population: d3.max(v, d => +d.Population || 0),  // Take max population
-            Date: v[0].Date  // Use first date for the week
+            Population: d3.max(v, d => +d.Population || 0),  
+            Date: v[0].Date  
         }),
         d => d.YearWeekISO
     );
-    // Convert to array and sort by date
     const weeklyArray = Array.from(weeklyData.values())
         .sort((a, b) => a.Date - b.Date);
-    // Calculate cumulative doses and uptake percentages
     const doseTypes = ['FirstDose', 'SecondDose', 'DoseAdditional1', 'DoseAdditional2', 'DoseAdditional3', 'DoseAdditional4', 'DoseAdditional5'];
     
     let cumulatives = {};
@@ -76,7 +66,6 @@ function processCountryData(data, countryCode) {
     weeklyArray.forEach(week => {
         doseTypes.forEach(type => {
             cumulatives[type] += week[type];
-            // Calculate uptake as percentage of population
             week[`${type}_uptake`] = (cumulatives[type] / week.Population) * 100;
         });
     });
@@ -86,9 +75,7 @@ function processCountryData(data, countryCode) {
 
 
 function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
-    // Clear any existing chart
     d3.select("#tsPlot").selectAll("*").remove();
-    // Process data for all countries
     const processedData = [];
     countryCodes.forEach((code, idx) => {
         const countryData = processCountryData(data, code);
@@ -107,18 +94,14 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         return;
     }
     
-    // Get container dimensions for responsive sizing
     const container = document.getElementById('tsPlot');
     const containerWidth = container.clientWidth || 800;
     const containerHeight = container.clientHeight || 500;
     
-    // Define chart dimensions based on container size
-    // Increased right margin to accommodate legend
     const margin = { top: 60, right: 180, bottom: 60, left: 60 };
     const width = Math.min(containerWidth - margin.left - margin.right, 900);
     const height = Math.min(containerHeight - margin.top - margin.bottom, 400);
     
-    // Create responsive SVG container
     const svg = d3.select("#tsPlot")
         .append("svg")
         .attr("width", "100%")
@@ -133,16 +116,13 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
     const g = svg.append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
     
-    // Get date range from all data
     const allDates = processedData.flatMap(d => d.data.map(p => p.Date));
     const dateExtent = d3.extent(allDates);
     
-    // Get max uptake value across all countries
     const maxUptake = d3.max(processedData, d => 
         d3.max(d.data, p => p[`${doseType}_uptake`])
     );
     
-    // Create scales
     const xScale = d3.scaleTime()
         .domain(dateExtent)
         .range([0, width]);
@@ -151,8 +131,7 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         .domain([0, Math.max(100, maxUptake)])
         .range([height, 0])
         .nice();
-    
-    // Add grid lines
+
     g.append("g")
         .attr("class", "grid-y")
         .style("stroke", "rgba(165, 180, 252, 0.15)")
@@ -177,13 +156,11 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         )
         .select(".domain").remove();
     
-    // Create line generator
     const line = d3.line()
         .x(d => xScale(d.Date))
         .y(d => yScale(d[`${doseType}_uptake`]))
-        .curve(d3.curveMonotoneX);  // Smooth curve
+        .curve(d3.curveMonotoneX); 
     
-    // Create tooltip div
     const tooltip = d3.select("body")
         .append("div")
         .attr("class", "ts-tooltip")
@@ -199,7 +176,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
         .style("z-index", "1000")
         .style("opacity", 0);
     
-    // Draw lines for each country with animation
     processedData.forEach((country, idx) => {
         const path = g.append("path")
             .datum(country.data)
@@ -385,9 +361,6 @@ function plotCumulativeUptake(data, countryCodes, doseType = 'SecondDose') {
             .style("opacity", 1);
     });
     
-    console.log(`✅ Cumulative uptake chart created successfully`);
-    
-    console.log(`\n📊 Final Uptake Percentages - ${doseLabel}`);
     processedData.forEach(country => {
         const lastPoint = country.data[country.data.length - 1];
         const finalUptake = lastPoint[`${doseType}_uptake`];

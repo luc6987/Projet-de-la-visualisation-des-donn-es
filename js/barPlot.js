@@ -1,7 +1,6 @@
 import { CleanVaccin } from './clean.js';
 
 const CONFIG = {
-    // Chart dimensions
     dimensions: {
         pyramid: {
             totalWidth: 600,
@@ -10,7 +9,6 @@ const CONFIG = {
             centerGap: 120
         }
     },
-    // Animation settings
     animation: {
         barDuration: 800,
         barDelay: 15,
@@ -20,7 +18,6 @@ const CONFIG = {
         legendDelay: 1000,
         legendItemDelay: 100
     },
-    // Visual styling
     styling: {
         barPadding: 0.1,
         strokeWidth: 0.5,
@@ -36,20 +33,17 @@ const CONFIG = {
             country2: '#e74c3c'
         }
     },
-    // Legend configuration
     legend: {
         spacing: 100,
         boxSize: 12,
         offsetY: 20,
         textOffset: 6
     },
-    // Dose types configuration
     doses: {
         types: ['FirstDose', 'SecondDose', 'DoseAdditional1', 'DoseAdditional2', 'DoseAdditional3'],
         colors: ['#00d4ff', '#ff00ff', '#a855f7', '#ff6b35', '#00ff88'],
         labels: ['First Dose', 'Second Dose', 'Booster 1', 'Booster 2', 'Booster 3']
     },
-    // Country name mappings
     countryNames: {
         'FR': 'France', 'DE': 'Germany', 'IT': 'Italy', 'ES': 'Spain',
         'PL': 'Poland', 'RO': 'Romania', 'NL': 'Netherlands', 'BE': 'Belgium',
@@ -61,14 +55,10 @@ const CONFIG = {
         'NO': 'Norway', 'LI': 'Liechtenstein'
     }
 };
-// Destructure frequently used config values for convenience
 const { types: doseTypes, colors, labels } = CONFIG.doses;
 const { countryNames } = CONFIG;
 
 
-/**
- * Aggregate weekly data into monthly totals
- */
 function aggregateMonthlyData(countryData, startYear, endYear) {
     const filteredData = countryData.filter(d => {
         if (!d.Date) return false;
@@ -96,9 +86,6 @@ function aggregateMonthlyData(countryData, startYear, endYear) {
     })).sort((a, b) => a.month.localeCompare(b.month));
 }
 
-/**
- * Get monthly data for a specific country
- */
 function getMonthlyData(data, countryCode, startYear, endYear) {
     console.log(`Getting monthly data for ${countryCode}, years ${startYear}-${endYear}`);
     const countryData = data.filter(d => d.ReportingCountry === countryCode);
@@ -116,15 +103,7 @@ function getMonthlyData(data, countryCode, startYear, endYear) {
 }
 
 
-// ============================================
-// MAIN VISUALIZATION FUNCTION
-// ============================================
-
-/**
- * Create horizontal pyramid bar charts comparing two countries
- */
 function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020, endYear = 2023) {
-    // Get monthly data for both countries
     const monthlyArray1 = getMonthlyData(data, countryCode1, startYear, endYear);
     const monthlyArray2 = getMonthlyData(data, countryCode2, startYear, endYear);
     
@@ -148,7 +127,6 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
     
     const data1Map = new Map(monthlyArray1.map(d => [d.month, d]));
     const data2Map = new Map(monthlyArray2.map(d => [d.month, d]));
-    // Clear existing chart
     d3.select("#barPlot").selectAll("*").remove();
     
     const container = document.getElementById('barPlot');
@@ -157,7 +135,6 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
     const { margin, centerGap, totalWidth, height } = dim.pyramid;
     const chartWidth = (Math.min(containerWidth * 0.98, totalWidth) - centerGap) / 2 - margin.left - margin.right + 55;
     
-    // Create responsive SVG
     const svg = d3.select("#barPlot")
         .append("svg")
         .attr("width", "100%")
@@ -169,13 +146,11 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
         .style("background", "transparent")
         .style("background", "transparent");
     
-    // Create scales
     const yScale = d3.scaleBand()
         .domain(allMonths)
         .range([0, height])
         .padding(styling.barPadding);
-    
-    // Calculate max total with safety checks
+
     const maxTotal = Math.max(
         d3.max(monthlyArray1, d => {
             if (!d) return 0;
@@ -192,12 +167,10 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
     const xScaleLeft = d3.scaleLinear().domain([0, maxTotal]).range([chartWidth, 0]);
     const xScaleRight = d3.scaleLinear().domain([0, maxTotal]).range([0, chartWidth]);
     
-    // Create both charts
     createHorizontalChart(svg, monthlyArray1, data1Map, allMonths, xScaleLeft, yScale, margin.left, true, maxTotal);
     createHorizontalChart(svg, monthlyArray2, data2Map, allMonths, xScaleRight, yScale, 
         margin.left + chartWidth + centerGap, false, maxTotal);
     
-    // Add center Y-axis, labels, and legend
     addCenterAxis(svg, yScale, margin, chartWidth, centerGap, height);
     addCountryLabels(svg, countryCode1, countryCode2, margin, chartWidth, centerGap);
     addLegend(svg, totalWidth, height, margin);
@@ -209,7 +182,6 @@ function formatMillionsTick(value, maxValue) {
     if (!Number.isFinite(value) || value === 0) return '0M';
     const millions = value / 1e6;
 
-    // Use more precision when ranges are small (common for smaller countries)
     let decimals;
     if (maxValue < 5e6) decimals = 2;
     else if (maxValue < 30e6) decimals = 1;
@@ -219,13 +191,6 @@ function formatMillionsTick(value, maxValue) {
     const cleaned = raw.replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
     return cleaned + 'M';
 }
-// ============================================
-// CHART RENDERING FUNCTIONS
-// ============================================
-
-/**
- * Create horizontal stacked bar chart for one country
- */
 function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yScale, xOffset, isLeft, maxTotal) {
     const { animation, styling } = CONFIG;
     const g = svg.append("g").attr("transform", `translate(${xOffset},${CONFIG.dimensions.pyramid.margin.top})`);
@@ -240,11 +205,9 @@ function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yS
             DoseAdditional3: 0
         };
     });
-    // Generate stacked data
     const stack = d3.stack().keys(doseTypes);
     const stackedData = stack(completeData);
     
-    // Create bars with animations
     stackedData.forEach((doseData, doseIndex) => {
         g.selectAll(`.bar-${doseIndex}`)
             .data(doseData)
@@ -272,8 +235,6 @@ function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yS
             .attr("width", d => Math.abs(xScale(d[1]) - xScale(d[0])));
     });
     
-    // Add X-axis
-    // NOTE: avoid rounding to whole millions (causes duplicates like 1M, 1M, 2M...)
     const xAxis = d3.axisBottom(xScale)
         .ticks(5)
         .tickFormat(d => formatMillionsTick(d, maxTotal));
@@ -300,9 +261,6 @@ function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yS
         .attr("opacity", 1);
 }
 
-/**
- * Show tooltip on bar hover
- */
 function showTooltip(event, d, doseIndex) {
     d3.select(event.target)
         .attr("stroke", "#00d4ff")
@@ -354,18 +312,12 @@ function showTooltip(event, d, doseIndex) {
         .style("top", (event.pageY - 20) + "px");
 }
 
-/**
- * Move tooltip with cursor
- */
 function moveTooltip(event) {
     d3.select(".chart-tooltip")
         .style("left", (event.pageX + 15) + "px")
         .style("top", (event.pageY - 20) + "px");
 }
 
-/**
- * Hide tooltip
- */
 function hideTooltip() {
     d3.select(event.target)
         .attr("stroke", "rgba(224, 231, 255, 0.3)")
@@ -375,9 +327,7 @@ function hideTooltip() {
     d3.selectAll(".chart-tooltip").remove();
 }
 
-/**
- * Add center Y-axis with month labels
- */
+
 function addCenterAxis(svg, yScale, margin, chartWidth, centerGap, height) {
     const { animation, styling } = CONFIG;
     const yAxisG = svg.append("g")
@@ -407,16 +357,12 @@ function addCenterAxis(svg, yScale, margin, chartWidth, centerGap, height) {
         .style("opacity", 1);
 }
 
-/**
- * Add country labels
- */
 function addCountryLabels(svg, countryCode1, countryCode2, margin, chartWidth, centerGap) {
     const { animation, styling } = CONFIG;
     const country1Name = countryNames[countryCode1] || countryCode1;
     const country2Name = countryNames[countryCode2] || countryCode2;
     const rightOffset = margin.left + chartWidth + centerGap;
     
-    // Left country label
     svg.append("text")
         .attr("x", margin.left + chartWidth / 2 - 100)
         .attr("y", margin.top - 15)
@@ -434,7 +380,6 @@ function addCountryLabels(svg, countryCode1, countryCode2, margin, chartWidth, c
         .attr("x", margin.left + chartWidth / 2)
         .style("opacity", 1);
     
-    // Right country label
     svg.append("text")
         .attr("x", rightOffset + chartWidth / 2 + 100)
         .attr("y", margin.top - 15)
@@ -453,9 +398,6 @@ function addCountryLabels(svg, countryCode1, countryCode2, margin, chartWidth, c
         .style("opacity", 1);
 }
 
-/**
- * Add legend at bottom
- */
 function addLegend(svg, totalWidth, height, margin) {
     const { legend: legendCfg, animation } = CONFIG;
     const totalLegendWidth = (labels.length - 1) * legendCfg.spacing;
@@ -490,15 +432,8 @@ function addLegend(svg, totalWidth, height, margin) {
     });
 }
 
-// ============================================
-// INITIALIZATION & EVENT HANDLING
-// ============================================
-
 let globalData = null;
 
-/**
- * Update chart when country selection changes
- */
 function updateChart() {
     const country1 = document.getElementById('country1Select').value;
     const country2 = document.getElementById('country2Select').value;
@@ -509,9 +444,6 @@ function updateChart() {
     }
 }
 
-/**
- * Initialize visualization (only in standalone mode)
- */
 if (!window.__dashboardMode) {
     CleanVaccin().then(data => {
         console.log("Data loaded, creating visualization...");

@@ -1,10 +1,7 @@
 
 import { CleanVaccin } from './clean.js';
 
-// France click handler callback
 let franceClickHandler = null;
-
-// Context object for map dimensions and data
 const ctx = {
     MAP_H: window.innerHeight / 2,
     MAP_W: window.innerWidth / 2,
@@ -12,7 +9,7 @@ const ctx = {
     YEAR: 2020
 };
 
-// Country code to country name mapping
+
 const countryNames = {
     'AT': 'Austria', 'BE': 'Belgium', 'BG': 'Bulgaria', 'CY': 'Cyprus',
     'CZ': 'Czechia', 'DE': 'Germany', 'DK': 'Denmark', 'EE': 'Estonia',
@@ -35,8 +32,7 @@ function calculateUptakeByCountry(data) {
         );
         
         if (filteredData.length === 0) return;
-        
-        // Sort by week to ensure cumulative calculation is correct
+
         filteredData.sort((a, b) => a.YearWeekISO.localeCompare(b.YearWeekISO));
         
         let firstDoseCum = 0;
@@ -49,10 +45,8 @@ function calculateUptakeByCountry(data) {
             booster1Cum += parseFloat(d.DoseAdditional1) || 0;
         });
         
-        // Get population from the most recent record
         const population = parseFloat(filteredData[filteredData.length - 1].Population);
         
-        // Calculate uptake percentages (doses per 100 people)
         results[country] = {
             country: country,
             countryName: countryNames[country] || country,
@@ -68,13 +62,10 @@ function calculateUptakeByCountry(data) {
 
 
 function makeGeo(vaccinData) {
-    // Get actual div size from the DOM
     const mapAreaDiv = document.getElementById("mapArea");
     const rect = mapAreaDiv.getBoundingClientRect();
     ctx.MAP_W = rect.width;
     ctx.MAP_H = rect.height;
-
-    // Create SVG container with responsive viewBox
     let svgMap = d3.select("#mapArea")
         .append('svg')
         .attr('width', '100%')
@@ -85,9 +76,8 @@ function makeGeo(vaccinData) {
 
     const g = svgMap.append('g');
 
-    // Add zoom behavior
     const zoom = d3.zoom()
-        .scaleExtent([1, 8])  // Min zoom: 1x, Max zoom: 8x
+        .scaleExtent([1, 8])  
         .on('zoom', (event) => {
             g.attr('transform', event.transform);
         });
@@ -97,15 +87,12 @@ function makeGeo(vaccinData) {
     Promise.all([
         d3.json("data/europe.geojson")
     ]).then(function(data) {
-        // Store geodata in context
         const geo = data[0];
         ctx.geo = geo;
 
-        // Calculate vaccination uptake for each country
         const uptakeByCountry = calculateUptakeByCountry(vaccinData);
         console.log("Uptake by country:", uptakeByCountry);
       
-        // Attach uptake data to country features
         geo.features.forEach(feature => {
             const countryCode = feature.properties.ISO2;
             if (uptakeByCountry[countryCode]) {
@@ -113,19 +100,15 @@ function makeGeo(vaccinData) {
             }
         });
 
-        // Create projection to fit Europe in the SVG viewport - using same approach as cartogram.js
         const padding = 40;
         ctx.proj = d3.geoMercator()
             .fitSize([ctx.MAP_W , ctx.MAP_H ], geo);
 
-        // Create path generator using the projection
         let projTopath = d3.geoPath().projection(ctx.proj);
 
-        // Color scale: Space theme gradient from dark purple to cyan
         const colorScale = d3.scaleSequential(d3.interpolateCool)
             .domain([0, 100]);
 
-        // Draw background map (semi-transparent)
         g.selectAll('.country-bg')
             .data(geo.features)
             .enter()
@@ -137,7 +120,6 @@ function makeGeo(vaccinData) {
             .style('stroke-width', 0.3)
             .style('opacity', 0.5);
 
-        // Draw country areas with color based on primary course uptake
         g.append('g')
             .attr("id", "countryArea")
             .selectAll("path")
@@ -146,26 +128,25 @@ function makeGeo(vaccinData) {
             .append("path")
             .attr('d', projTopath)
             .attr('class', 'countryArea')
-            .attr('data-country', d => d.properties.ISO2)  // Add country code as data attribute
+            .attr('data-country', d => d.properties.ISO2)  
             .style('fill', d => {
-                // Color based on primary course (2nd dose) uptake
+             
                 if (d.properties.uptake) {
                     return colorScale(d.properties.uptake.primaryCourse);
                 }
-                return '#cccccc';  // Gray for countries without data
+                return '#cccccc'; 
             })
             .style('stroke', 'white')
             .style('stroke-width', '0.5px')
-            .style('cursor', 'pointer')  // Show pointer cursor on hover
-            .style('transition', 'all 0.3s ease')  // Add transition for smooth highlighting
+            .style('cursor', 'pointer')  
+            .style('transition', 'all 0.3s ease')  
             .on('mouseover', function(event, d) {
-                // Highlight the country on hover
+
                 d3.select(this)
                     .style('stroke', 'rgba(255, 255, 255, 0.5)')
                     .style('stroke-width', '2px')
                     .style('filter', 'brightness(1.1)');
                 
-                // Show tooltip with country information
                 const countryCode = d.properties.ISO2;
                 const countryName = countryNames[countryCode] || d.properties.NAME || countryCode;
                 const uptake = d.properties.uptake;
@@ -188,7 +169,6 @@ function makeGeo(vaccinData) {
                     tooltipContent += '<div style="margin-top: 5px; color: #999;">No data available</div>';
                 }
                 
-                // Create or update tooltip
                 let tooltip = d3.select('body').select('.map-tooltip');
                 if (tooltip.empty()) {
                     tooltip = d3.select('body').append('div')
@@ -213,25 +193,22 @@ function makeGeo(vaccinData) {
                     .style('opacity', 1);
             })
             .on('mousemove', function(event) {
-                // Update tooltip position as mouse moves
                 d3.select('.map-tooltip')
                     .style('left', (event.pageX + 15) + 'px')
                     .style('top', (event.pageY - 10) + 'px');
             })
             .on('mouseout', function() {
-                // Reset country style
+        
                 d3.select(this)
                     .style('stroke', 'white')
                     .style('stroke-width', '0.5px')
                     .style('filter', 'none');
                 
-                // Remove tooltip
                 d3.select('.map-tooltip').style('opacity', 0).remove();
             })
             .on('click', function(event, d) {
                 const countryCode = d.properties.ISO2;
                 
-                // Handle France click to show detailed map
                 if (countryCode === 'FR' && franceClickHandler) {
                     event.stopPropagation();
                     franceClickHandler();
@@ -241,29 +218,24 @@ function makeGeo(vaccinData) {
         addLegend(svgMap, colorScale);
     });
 }
-
-
 function addLegend(svg, colorScale) {
     const legendWidth = 15;
     const legendHeight = 150;
-    const legendX = ctx.MAP_W - 50;  // Position near right edge
+    const legendX = ctx.MAP_W - 50; 
     const legendY = 40;
 
-    // Create legend group
     const legend = svg.append('g')
         .attr('id', 'legend')
         .attr('transform', `translate(${legendX}, ${legendY})`);
 
-    // Define gradient for the legend bar
     const defs = svg.append('defs');
     const gradient = defs.append('linearGradient')
         .attr('id', 'legend-gradient')
         .attr('x1', '0%')
-        .attr('y1', '100%')  // Bottom to top
+        .attr('y1', '100%')  
         .attr('x2', '0%')
         .attr('y2', '0%');
 
-    // Add color stops to the gradient (0% at bottom, 100% at top)
     const numStops = 10;
     for (let i = 0; i <= numStops; i++) {
         const value = (i / numStops) * 100;
@@ -272,7 +244,6 @@ function addLegend(svg, colorScale) {
             .attr('stop-color', colorScale(value));
     }
 
-    // Draw the colored rectangle
     legend.append('rect')
         .attr('width', legendWidth)
         .attr('height', legendHeight)
@@ -280,33 +251,27 @@ function addLegend(svg, colorScale) {
         .style('stroke', 'black')
         .style('stroke-width', '1px');
 
-    // Create scale for the legend axis
     const legendScale = d3.scaleLinear()
         .domain([0, 100])
-        .range([legendHeight, 0]);  // Inverted to match gradient
+        .range([legendHeight, 0]);  
 
-    // Create axis with percentage labels
     const legendAxis = d3.axisRight(legendScale)
         .ticks(5)
         .tickFormat(d => `${d}%`);
 
-    // Add axis to legend
     const axisGroup = legend.append('g')
         .attr('transform', `translate(${legendWidth}, 0)`)
         .call(legendAxis);
     
-    // Style axis text (percentages) to white - force white color
     axisGroup.selectAll('text')
         .style('fill', 'white')
         .style('color', 'white')
         .attr('fill', 'white');
 
-    // Style axis lines and ticks to white
     axisGroup.selectAll('path, line')
         .style('stroke', 'white')
         .attr('stroke', 'white');
 
-    // Add legend title
     legend.append('text')
         .attr('x', legendWidth / 2)
         .attr('y', -10)
@@ -317,19 +282,12 @@ function addLegend(svg, colorScale) {
         .text('Uptake (%)');
 }
 
-
-/**
- * Highlight selected countries on the map
- * @param {string} country1 - First selected country code
- * @param {string} country2 - Second selected country code
- */
 function highlightCountries(country1, country2) {
     console.log(`🗺️  Highlighting countries: ${country1}, ${country2}`);
     
-    // Find all country paths in the map
+
     const countries = d3.selectAll('#mapArea path');
     
-    // Reset all countries to default style (faded)
     countries
         .transition()
         .duration(300)
@@ -337,7 +295,6 @@ function highlightCountries(country1, country2) {
         .style('stroke', 'rgba(165, 180, 252, 0.5)')
         .style('stroke-width', 0.5);
     
-    // Highlight country 1 (cyan glow)
     d3.selectAll(`#mapArea path[data-country="${country1}"]`)
         .transition()
         .duration(500)
@@ -346,7 +303,6 @@ function highlightCountries(country1, country2) {
         .style('stroke-width', 3)
         .style('filter', 'drop-shadow(0 0 10px #00d4ff)');
     
-    // Highlight country 2 (magenta glow)
     d3.selectAll(`#mapArea path[data-country="${country2}"]`)
         .transition()
         .duration(500)
@@ -355,23 +311,17 @@ function highlightCountries(country1, country2) {
         .style('stroke-width', 3)
         .style('filter', 'drop-shadow(0 0 10px #ff00ff)');
     
-    // Show comparison stats
     showComparisonStats(country1, country2);
 }
 
-/**
- * Display detailed comparison statistics for selected countries
- */
 function showComparisonStats(country1, country2) {
     const statsContent = document.getElementById('statsContent');
     
     if (!window.__mapVaccinData || !statsContent) return;
     
-    // Get detailed stats for both countries
     const stats1 = getDetailedCountryStats(window.__mapVaccinData, country1);
     const stats2 = getDetailedCountryStats(window.__mapVaccinData, country2);
     
-    // Build HTML for stats panel (requested: only Population + Total vaccines)
     statsContent.innerHTML = `
         <div class="country-stat-card country1">
             <h4>🔵 ${countryNames[country1] || country1}</h4>

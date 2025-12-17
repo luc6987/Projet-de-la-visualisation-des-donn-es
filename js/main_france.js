@@ -1,6 +1,4 @@
-// Main script for France Regional Analysis page
 
-// Parse YearWeek format (e.g., "2020-W01") to Date
 function parseYearWeek(yearWeek) {
     if (!yearWeek) return null;
     const [year, week] = yearWeek.split('-W');
@@ -8,7 +6,7 @@ function parseYearWeek(yearWeek) {
     return date;
 }
 
-// Initialize the page
+
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 France Regional Analysis page loaded');
     
@@ -25,14 +23,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error('❌ Failed to initialize France map:', error);
     }
     
-    // Listen to region selector changes (populated by age_vaccin_fr.js) and highlight the region on map
     const regionSelect = document.getElementById('regionSelect');
     if (regionSelect) {
         regionSelect.addEventListener('change', function() {
             const selectedRegion = this.value;
             console.log('🎯 Region selected:', selectedRegion);
             
-            // Wait a bit to ensure map is loaded
+    
             setTimeout(() => {
                 if (highlightRegionFunc) {
                     console.log('📞 Calling highlightRegion with:', selectedRegion);
@@ -45,6 +42,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
         console.warn('⚠️ regionSelect element not found');
     }
-    
-    console.log('✅ France Regional Analysis page initialized');
+
 });

@@ -34,7 +34,7 @@ let ageGlobalData = [];
 let ageSelectedRegion = '11';
 let currentSelectedDepartement = 'all'; 
 
-// Color scales
+
 const coverageColorScale = d3.scaleSequential()
     .domain([0, 100])
     .interpolator(d3.interpolateViridis);
@@ -43,7 +43,7 @@ const ageColorScale = d3.scaleOrdinal()
     .domain(Object.keys(ageGroupLabels).filter(k => k !== '0'))
     .range(d3.schemeTableau10);
 
-// Load and parse data
+
 async function loadData() {
     const rawData = await d3.dsv(';', 'data/vacsi-tot-a-reg-2023-07-13-15h50.csv', d => ({
         region: d.reg,
@@ -66,7 +66,6 @@ async function loadData() {
         covBooster3: +d.couv_tot_3_rappel
     }));
     
-    // Filter: metropolitan regions only, exclude aggregated age group '0'
     ageGlobalData = rawData.filter(d => 
         !overseasRegions.includes(d.region) && 
         ageRegionNames[d.region] && 
@@ -77,8 +76,6 @@ async function loadData() {
 }
 
 
-
-// 5. STACKED AREA CHART: Booster Progression by Age Group
 function createStackedAreaChart(selectedDepartement = 'all') {
     const container = d3.select('#stackedAreaChart');
     container.html('');
@@ -96,12 +93,10 @@ function createStackedAreaChart(selectedDepartement = 'all') {
     const g = svg.append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    // Filter data by selected département
     const filteredData = selectedDepartement === 'all' 
         ? ageGlobalData 
         : ageGlobalData.filter(d => d.region === selectedDepartement);
     
-    // Aggregate by age group
     const ageGroups = Object.keys(ageGroupLabels).filter(k => k !== '0');
     const aggregated = ageGroups.map(age => {
         const ageData = filteredData.filter(d => d.ageGroup === age);
@@ -157,7 +152,6 @@ function createStackedAreaChart(selectedDepartement = 'all') {
             d3.select(this).transition().duration(200).style('opacity', 0.8);
         });
     
-    // Axes
     const xAxisGroup = g.append('g')
         .attr('class', 'axis')
         .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
@@ -238,7 +232,6 @@ function createStackedAreaChart(selectedDepartement = 'all') {
     });
 }
 
-// Tooltip functions
 function showTooltip(event, d, chartType) {
     const tooltip = d3.select('body').selectAll('.viz-tooltip').data([0]);
     const tooltipDiv = tooltip.enter().append('div')
@@ -301,17 +294,14 @@ function hideTooltip() {
         .remove();
 }
 
-// Setup region selector - connect to global selector in header
 function setupRegionSelector() {
     const select = d3.select('#regionSelect');
     
-    // Add "All Régions" option first
     select.append('option')
         .attr('value', 'all')
         .text('All Régions (France)')
         .property('selected', true);
     
-    // Add individual regions
     Object.entries(ageRegionNames).forEach(([code, name]) => {
         select.append('option')
             .attr('value', code)
@@ -324,38 +314,33 @@ function setupRegionSelector() {
         console.log(`📍 Region changed to: ${selectedRegion === 'all' ? 'All France' : ageRegionNames[selectedRegion]}`);
         createStackedAreaChart(selectedRegion);
         
-        // Notify gender chart of region change
         window.dispatchEvent(new CustomEvent('regionChanged', {
             detail: { regionCode: selectedRegion }
         }));
     });
 }
 
-// Initialize dashboard
 async function initDashboard() {
     await loadData();
 
     setupRegionSelector();
     createStackedAreaChart('all');
     
-    // Add resize listener for responsive charts
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
             console.log('🔄 Window resized - re-rendering age vaccination charts');
             
-            // Re-render stacked area chart with current département selection
             createStackedAreaChart(currentSelectedDepartement);
         }, 250);
     });
 }
 
-// Run
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDashboard);
 } else {
     initDashboard();
 }
 
-} // End of ageVizInitialized check
+}

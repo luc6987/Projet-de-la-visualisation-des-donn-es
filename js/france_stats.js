@@ -1,11 +1,8 @@
-// France Vaccination Statistics Calculator
-// Combines data from gender and age datasets for comprehensive insights
 
 async function updateFranceStatistics() {
     console.log("📊 Calculating France vaccination statistics...");
     
     try {
-        // Load both datasets
         const genderData = await d3.dsv(';', 'data/vacsi-tot-s-reg-2023-07-13-15h51.csv');
         const ageData = await d3.dsv(';', 'data/vacsi-tot-a-reg-2023-07-13-15h50.csv');
         
@@ -19,7 +16,6 @@ async function updateFranceStatistics() {
         
         const overseasRegions = ['01', '02', '03', '04', '06', '07', '08'];
         
-        // Filter metropolitan regions
         const metroGenderData = genderData.filter(d => 
             !overseasRegions.includes(d.reg) && regionNames[d.reg]
         );
@@ -28,19 +24,16 @@ async function updateFranceStatistics() {
             !overseasRegions.includes(d.reg) && regionNames[d.reg]
         );
         
-        // 1. Total Vaccinations
         const totalVaccinations = d3.sum(metroGenderData, d => parseFloat(d.n_tot_complet) || 0);
         const totalMillions = (totalVaccinations / 1000000).toFixed(1);
         const totalVacElement = document.getElementById('statTotalVaccinations');
         if (totalVacElement) totalVacElement.textContent = totalMillions + 'M';
         
-        // 2. Average Coverage
         const allRegionsData = metroGenderData.filter(d => d.sexe === '0');
         const avgCoverage = d3.mean(allRegionsData, d => parseFloat(d.couv_tot_complet));
         const avgCovElement = document.getElementById('statAvgCoverage');
         if (avgCovElement) avgCovElement.textContent = avgCoverage.toFixed(1) + '%';
         
-        // 3. Booster Rate
         const boosterData = metroGenderData.filter(d => d.sexe === '0');
         const avgBoosterCov = d3.mean(boosterData, d => parseFloat(d.couv_tot_rappel));
         const boosterElement = document.getElementById('statBoosterRate');
@@ -63,5 +56,4 @@ async function updateFranceStatistics() {
     }
 }
 
-// Export function to global scope
 window.updateFranceStatistics = updateFranceStatistics;

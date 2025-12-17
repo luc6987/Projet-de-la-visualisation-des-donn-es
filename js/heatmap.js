@@ -1,9 +1,9 @@
-// D3.js Heatmap Implementation - Matching Python matplotlib style
+
 export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, startYear = 2021, endYear = 2022, doseType = 'DoseAdditional1') {
-  // Clear existing heatmap
+ 
   d3.select('#heatmap').selectAll('*').remove();
 
-  // Country name mapping
+  
   const countryNames = {
     'AT': 'Austria', 'BE': 'Belgium', 'BG': 'Bulgaria', 'HR': 'Croatia',
     'CY': 'Cyprus', 'CZ': 'Czechia', 'DK': 'Denmark', 'EE': 'Estonia',
@@ -14,21 +14,16 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     'PT': 'Portugal', 'RO': 'Romania', 'SK': 'Slovakia', 'SI': 'Slovenia',
     'ES': 'Spain', 'SE': 'Sweden'
   };
-
-  // State to track which country is currently displayed
   let currentCountry = countryCode1;
   let resizeTimer;
 
-  // Function to render heatmap for a given country
   const renderHeatmap = (countryCode) => {
-    // Clear only the SVG, not the button
+
     d3.select('#heatmap').select('svg').remove();
-    
-    // Update title
+
     const countryName = countryNames[countryCode] || countryCode;
     d3.select('.heatmap-title').text(`Vaccination by Age Group (2021-2022) - ${countryName}`);
 
-  // Filter data for selected country and years
   const countryData = vaccinData.filter(d => {
     const reportingCountry = d.ReportingCountry;
     const yearWeek = d.YearWeekISO;
@@ -37,7 +32,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
            yearWeek <= `${endYear}-W53`;
   });
 
-  // Process data: add date, year, quarter, and period
   countryData.forEach(d => {
     const [year, week] = d.YearWeekISO.split('-W');
     const date = new Date(year, 0, 1 + (week - 1) * 7);
@@ -48,19 +42,15 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     d[doseType] = +d[doseType] || 0;
   });
 
-  // Aggregate by quarter and age group
   const aggregated = d3.rollup(
     countryData,
     v => d3.sum(v, d => d[doseType]),
     d => d.Period,
     d => d.TargetGroup
   );
-
-  // Get unique periods and age groups
   const periods = Array.from(new Set(countryData.map(d => d.Period))).sort();
   const allAgeGroups = Array.from(new Set(countryData.map(d => d.TargetGroup)));
   
-  // Filter and sort age groups (only those starting with 'Age')
   const ageGroups = allAgeGroups
     .filter(ag => ag.startsWith('Age'))
     .sort((a, b) => {
@@ -70,8 +60,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
       };
       return getNum(a) - getNum(b);
     });
-
-  // Create values matrix
   const values = ageGroups.map(age => 
     periods.map(period => {
       const periodMap = aggregated.get(period);
@@ -79,10 +67,8 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     })
   );
 
-  // Match Python figsize=(16, 8) -> responsive for dashboard integration
   const container = d3.select('#heatmap').node();
   
-  // Check if container exists
   if (!container) {
     console.warn('⚠️ Heatmap container not found, skipping render');
     return;
@@ -105,7 +91,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Flatten data for D3
   const flatData = [];
   ageGroups.forEach((age, i) => {
     periods.forEach((period, j) => {
@@ -119,7 +104,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     });
   });
 
-  // Scales - matching Python aspect='auto'
   const x = d3.scaleBand()
     .domain(periods)
     .range([0, width])
@@ -133,12 +117,10 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
   const maxValue = d3.max(flatData, d => d.value);
   const minValue = 0;
   
-  // Custom space-themed color scheme - Purple to Cyan gradient
   const colorScale = d3.scaleSequential()
     .domain([minValue, maxValue])
     .interpolator(d3.interpolateYlOrRd);
 
-  // Draw heatmap cells with beautiful cascading animation from left to right
   const cells = svg.selectAll('rect')
     .data(flatData)
     .enter()
@@ -154,11 +136,10 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     .style('transform', 'scale(0)')
     .style('transform-origin', 'center');
 
-  // Animate cells from left to right with cascading effect
   cells.transition()
     .duration(600)
     .delay((d, i) => {
-      // Calculate delay based on column (left to right) and add slight row offset
+
       const colDelay = d.col * 80; 
       const rowDelay = d.row * 15; 
       return colDelay + rowDelay;
@@ -169,7 +150,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
 
   cells
     .on('mouseover', function(event, d) {
-      // Remove any existing tooltips first
       d3.selectAll('.heatmap-tooltip').remove();
       
       d3.select(this)
@@ -178,8 +158,7 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
         .style('transform', 'scale(1.1)')
         .attr('stroke-width', 2)
         .attr('stroke', '#2c3e50');
-      
-      // Show tooltip with value
+    
       d3.select('body').append('div')
         .attr('class', 'heatmap-tooltip')
         .style('position', 'absolute')
@@ -215,7 +194,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
       d3.selectAll('.heatmap-tooltip').remove();
     });
 
-  // X-axis - matching Python rotation=45, ha='right', fontsize=10
   const xAxis = svg.append('g')
     .attr('transform', `translate(0,${height})`)
     .call(d3.axisBottom(x).tickSize(0))
@@ -230,7 +208,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
   xAxis.select('.domain').remove();
   xAxis.selectAll('.tick line').style('stroke', 'white');
 
-  // Animate x-axis
   xAxis.transition()
     .duration(800)
     .delay(400)
@@ -261,7 +238,7 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
     .attr('transform', `translate(${width + 40}, ${height * 0.15})`)
     .style('opacity', 0);
 
-  // Create gradient for colorbar
+
   const defs = svg.append('defs');
   const gradientId = `legend-gradient-${Date.now()}`;
   const gradient = defs.append('linearGradient')
@@ -278,19 +255,18 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
       .attr('stop-color', colorScale(maxValue - (maxValue * i / numStops)));
   }
 
-  // Colorbar rectangle
+
   legend.append('rect')
     .attr('width', legendWidth)
     .attr('height', legendHeight)
     .style('fill', `url(#${gradientId})`);
 
-  // Animate legend
+
   legend.transition()
     .duration(800)
     .delay(600)
     .style('opacity', 1);
 
-  // Colorbar axis - matching Python tick formatting
   const legendAxis = d3.axisRight(legendScale)
     .ticks(8)
     .tickFormat(d => {
@@ -309,7 +285,6 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
   legendAxisGroup.selectAll('.domain, .tick line').style('stroke', 'white');
   legendAxisGroup.select('.domain').remove();
 
-  // Add minor grid lines (matching Python minor grid)
   const xGridLines = svg.append('g')
     .attr('class', 'grid-lines');
   
@@ -335,12 +310,10 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
       .attr('stroke', 'white')
       .attr('stroke-width', 0.5);
   });
-  }; // End of renderHeatmap function
+  }; 
 
-  // Create toggle button (only once, outside render function)
   const heatmapContainer = d3.select('#heatmap');
-  
-  // Remove any existing button first
+
   heatmapContainer.selectAll('.heatmap-toggle-container').remove();
   
   const buttonContainer = heatmapContainer
@@ -377,28 +350,24 @@ export function plotVaccinationHeatmap(vaccinData, countryCode1, countryCode2, s
         .style('box-shadow', '0 2px 4px rgba(0,0,0,0.2)');
     })
     .on('click', function() {
-      // Toggle between countries
+      
       currentCountry = (currentCountry === countryCode1) ? countryCode2 : countryCode1;
       const otherCountry = (currentCountry === countryCode1) ? countryCode2 : countryCode1;
       
-      // Update button text
       d3.select(this).text(`Switch to ${countryNames[otherCountry] || otherCountry}`);
       
-      // Re-render heatmap with transition
       renderHeatmap(currentCountry);
     });
 
-  // Initial render
   renderHeatmap(currentCountry);
 
-  // Add resize listener to make heatmap responsive
   window.addEventListener('resize', function() {
     const container = d3.select('#heatmap').node();
-    if (!container) return; // Skip if container doesn't exist
+    if (!container) return;
     
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function() {
       renderHeatmap(currentCountry);
-    }, 250); // Debounce resize events
+    }, 250); 
   });
 }

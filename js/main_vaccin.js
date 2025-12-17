@@ -193,19 +193,14 @@ function initializeGlobalControls() {
     console.log("✅ Global controls initialized");
 }
 
-// ============================================
-// AGE GROUP BUTTON MODULE
-// ============================================
-
 function createAgeGroupButton() {
-    // Find the global controls container
+    
     const globalControls = document.querySelector('.global-controls');
     if (!globalControls) {
         console.warn('⚠️ Global controls container not found');
         return;
     }
     
-    // Create Age Group button
     const ageGroupBtn = document.createElement('button');
     ageGroupBtn.id = 'ageGroupBtn';
     ageGroupBtn.textContent = 'Age Group';
@@ -221,7 +216,6 @@ function createAgeGroupButton() {
         margin-left: 10px;
     `;
     
-    // Create Reset button (initially hidden)
     const resetBtn = document.createElement('button');
     resetBtn.id = 'resetDashboardBtn';
     resetBtn.textContent = '↩️ Back to Dashboard';
@@ -238,7 +232,6 @@ function createAgeGroupButton() {
         display: none;
     `;
     
-    // Add hover effects for Age Group button
     ageGroupBtn.addEventListener('mouseenter', () => {
         ageGroupBtn.style.transform = 'translateY(-2px)';
         ageGroupBtn.style.boxShadow = '0 5px 20px rgba(167, 139, 250, 0.4)';
@@ -249,11 +242,9 @@ function createAgeGroupButton() {
         ageGroupBtn.style.boxShadow = '';
     });
     
-    // Add click handler to hide all plots except map
     ageGroupBtn.addEventListener('click', () => {
         console.log('📊 Age Group button clicked - redirecting to age group page');
         
-        // Redirect to age group analysis page
         window.location.href = 'index_agegroup.html';
     });
     
@@ -288,13 +279,9 @@ function createBarChartVisualization(data) {
     console.log("✅ Bar chart visualization complete");
 }
 
-// ============================================
-// TIME SERIES VISUALIZATION MODULE
-// ============================================
-
 
 function initializeTimeSeriesControls(data) {
-    // Only add listener for dose type (countries controlled by global selectors)
+
     const updateChart = () => {
         const country1 = document.getElementById('globalCountry1Select').value;
         const country2 = document.getElementById('globalCountry2Select').value;
@@ -312,12 +299,10 @@ function createTimeSeriesVisualization(data) {
     
     initializeTimeSeriesControls(data);
     
-    // Temporarily clear the container and set up for time series
+
     const container = d3.select('#tsPlot');
-    container.html(''); // Clear any loading text
+    container.html(''); 
     
-    // Call the cumulative uptake function from tsPlot.js
-    // This function takes a single dose type (not an array)
     plotCumulativeUptake(
         data,
         ['FR', 'IT'],    
@@ -327,33 +312,23 @@ function createTimeSeriesVisualization(data) {
     console.log("✅ Time series visualization complete");
 }
 
-// ============================================
-// KERNEL DENSITY PLOT VISUALIZATION MODULE
-// ============================================
-
 function createKernelPlotVisualization(data) {
     console.log("📊 Creating kernel density plot...");
     
-    // Clear the container
+   
     const container = d3.select('#chart');
     container.html('');
     
-    // Call the kernel plot function with same default countries as bar chart
     plotTwoCountryComparison(data, 'FR', 'IT');
     
     console.log("✅ Kernel plot visualization complete");
 }
-
-// ============================================
-// DASHBOARD INITIALIZATION
-// ============================================
 
 async function initializeDashboard() {
     console.log("🎯 Initializing COVID-19 Vaccination Dashboard...");
     
     try {
 
-        // Only set loading indicators for elements that exist
         const mapArea = document.getElementById('mapArea');
         const barPlot = document.getElementById('barPlot');
         const tsPlot = document.getElementById('tsPlot');
@@ -366,46 +341,32 @@ async function initializeDashboard() {
         if (chart) chart.innerHTML = '<div class="loading">Loading kernel density plot</div>';
         if (heatmapElement) heatmapElement.innerHTML = '<div class="loading">Loading heatmap</div>';
         
-        // Load vaccination data
-        console.log("📥 Loading vaccination data...");
         const vaccinData = await CleanVaccin();
-        console.log(`✅ Data loaded: ${vaccinData.length} records`);
-        
-        // Store data globally for event handlers
         globalVaccinData = vaccinData;
-        
-        // Clear loading indicators for elements that exist
         if (mapArea) mapArea.innerHTML = '';
         if (barPlot) barPlot.innerHTML = '';
         if (tsPlot) tsPlot.innerHTML = '';
         if (chart) chart.innerHTML = '';
         if (heatmapElement) heatmapElement.innerHTML = '';
-        
-        // Create visualizations only if containers exist
+    
         if (mapArea) createMapVisualization(vaccinData);
         if (barPlot) createBarChartVisualization(vaccinData);
         if (tsPlot) createTimeSeriesVisualization(vaccinData);
         if (chart) createKernelPlotVisualization(vaccinData);
         
-        // Create heatmap visualization only if element exists (vaccination page only)
         if (heatmapElement) {
             console.log("🔥 Creating vaccination heatmap...");
             plotVaccinationHeatmap(vaccinData, 'FR', 'IT', 2021, 2022, 'SecondDose');
-            console.log("✅ Heatmap visualization complete");
         }
         
-        // Initialize global controls (must be after visualizations are created)
         initializeGlobalControls();
-        
-        console.log("🎉 Dashboard initialization complete!");
-        
+
     } catch (error) {
         console.error("❌ Error initializing dashboard:", error);
         alert("Failed to load dashboard. Please check the console for details.");
     }
 }
 
-// Initialize dashboard when page loads
 window.addEventListener('load', initializeDashboard);
 
 
@@ -418,4 +379,3 @@ window.addEventListener('resize', () => {
     }, 250);
 });
 
-console.log("✅ Dashboard controller loaded successfully");

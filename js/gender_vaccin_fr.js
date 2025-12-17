@@ -1,5 +1,3 @@
-// Gender Vaccination Dashboard - Population Pyramid
-// Interactive pyramid chart comparing male vs female vaccination by region
 
 const regionNames = {
     '11': 'Île-de-France', '24': 'Centre-Val de Loire', '27': 'Bourgogne-Franche-Comté',
@@ -9,7 +7,6 @@ const regionNames = {
     '94': 'Corse'
 };
 
-// Département to region mapping
 const depToRegion = {
     '75': '11', '77': '11', '78': '11', '91': '11', '92': '11', '93': '11', '94': '11', '95': '11',
     '18': '24', '28': '24', '36': '24', '37': '24', '41': '24', '45': '24',
@@ -26,7 +23,6 @@ const depToRegion = {
     '2A': '94', '2B': '94'
 };
 
-// Département names
 const depNames = {
     '75': 'Paris', '77': 'Seine-et-Marne', '78': 'Yvelines', '91': 'Essonne', '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis', '94': 'Val-de-Marne', '95': "Val-d'Oise",
     '18': 'Cher', '28': 'Eure-et-Loir', '36': 'Indre', '37': 'Indre-et-Loire', '41': 'Loir-et-Cher', '45': 'Loiret',
@@ -48,7 +44,7 @@ const sexLabels = { '0': 'All', '1': 'Male', '2': 'Female' };
 
 let globalData = [];
 let selectedYearRange = 'all';
-let selectedRegionCode = 'all'; // Track selected region
+let selectedRegionCode = 'all'; 
 
 const vaccineTypeLabels = {
     'dose1': 'First Dose',
@@ -57,7 +53,6 @@ const vaccineTypeLabels = {
     'booster2': 'Second Booster'
 };
 
-// Load data from département-level daily data with cumulative values
 async function loadData() {
     const rawData = await d3.dsv(';', 'data/vacsi-s-dep-2023-07-13-15h51.csv', d => ({
         dep: d.dep,
@@ -88,7 +83,6 @@ async function loadData() {
     console.log(`Loaded ${globalData.length} records (metropolitan regions only, by département, daily with cumulative)`);
 }
 
-// Population Pyramid Chart - Gender Comparison by Département or Region
 function createPyramidChart(vaccineType = 'complete') {
     const container = d3.select('#pyramidChart');
     
@@ -97,7 +91,6 @@ function createPyramidChart(vaccineType = 'complete') {
     const height = 500;
     const margin = { top: 60, right: 80, bottom: 60, left: 180 }; 
 
-    // Reuse or create SVG
     let svg = container.select('svg');
     if (svg.empty()) {
         svg = container.append('svg')
@@ -109,7 +102,6 @@ function createPyramidChart(vaccineType = 'complete') {
         svg.attr('viewBox', `0 0 ${width} ${height}`);
     }
     
-    // Reuse or create main group
     let g = svg.select('g.main-group');
     if (g.empty()) {
         g = svg.append('g')
@@ -117,13 +109,10 @@ function createPyramidChart(vaccineType = 'complete') {
             .attr('transform', `translate(${margin.left},${margin.top})`);
     }
     
-    // Determine what to show based on selected region
     const showDepartements = selectedRegionCode !== 'all';
     
-    // Filter data by year range
     let filteredData = globalData;
     
-    // Filter by year range
     if (selectedYearRange !== 'all') {
         filteredData = filteredData.filter(d => {
             if (selectedYearRange === '2020-2021') {
@@ -136,8 +125,7 @@ function createPyramidChart(vaccineType = 'complete') {
             return true;
         });
     }
-    
-    // Filter by region if specific region selected
+
     if (showDepartements) {
         filteredData = filteredData.filter(d => d.region === selectedRegionCode);
     }
@@ -152,18 +140,15 @@ function createPyramidChart(vaccineType = 'complete') {
                    vaccineType === 'booster1' ? 'covBooster1' : 'covBooster2';
     
     if (showDepartements) {
-        // Show départements of the selected region
         const departements = [...new Set(filteredData.map(d => d.dep))].filter(Boolean);
         
         departements.forEach(dep => {
-            // Get latest cumulative data for male within the year range
             const maleRecords = filteredData.filter(d => d.dep === dep && d.sex === '1')
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
             const maleLatest = maleRecords.length > 0 ? maleRecords[maleRecords.length - 1] : null;
             const maleTotal = maleLatest ? maleLatest[dataKey] : 0;
             const maleCov = maleLatest ? maleLatest[covKey] : 0;
             
-            // Get latest cumulative data for female within the year range
             const femaleRecords = filteredData.filter(d => d.dep === dep && d.sex === '2')
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
             const femaleLatest = femaleRecords.length > 0 ? femaleRecords[femaleRecords.length - 1] : null;
@@ -182,13 +167,10 @@ function createPyramidChart(vaccineType = 'complete') {
             }
         });
     } else {
-        // Show all regions
+    
         const regions = [...new Set(filteredData.map(d => d.region))].filter(Boolean);
-        
         regions.forEach(regionCode => {
             const regionName = regionNames[regionCode];
-            
-            // Get départements in this region
             const depsInRegion = [...new Set(filteredData.filter(d => d.region === regionCode).map(d => d.dep))];
             
             let maleTotal = 0;
@@ -198,7 +180,6 @@ function createPyramidChart(vaccineType = 'complete') {
             let maleCount = 0;
             let femaleCount = 0;
             
-            // Aggregate latest data from each département in the region
             depsInRegion.forEach(dep => {
                 const maleRecords = filteredData.filter(d => d.dep === dep && d.sex === '1')
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -235,13 +216,10 @@ function createPyramidChart(vaccineType = 'complete') {
         });
     }
     
-    // Sort by total descending
     pyramidData.sort((a, b) => (b.male + b.female) - (a.male + a.female));
     
-    // Find max for symmetric scale
     const maxValue = d3.max(pyramidData, d => Math.max(d.male, d.female));
     
-    // Scales
     const x = d3.scaleLinear()
         .domain([-maxValue, maxValue])
         .range([0, width - margin.left - margin.right]);
@@ -251,7 +229,6 @@ function createPyramidChart(vaccineType = 'complete') {
         .range([0, height - margin.top - margin.bottom])
         .padding(0.2);
     
-    // Update or create center line
     g.selectAll('.center-line')
         .data([null])
         .join('line')
@@ -265,7 +242,6 @@ function createPyramidChart(vaccineType = 'complete') {
         .attr('stroke-dasharray', '8,4')
         .style('opacity', 0.6);
     
-    // Male bars (left side)
     g.selectAll('.bar-male')
         .data(pyramidData, d => d.label)
         .join(
@@ -319,7 +295,6 @@ function createPyramidChart(vaccineType = 'complete') {
             hideTooltip();
         });
     
-    // Female bars (right side)
     g.selectAll('.bar-female')
         .data(pyramidData, d => d.label)
         .join(
@@ -371,7 +346,6 @@ function createPyramidChart(vaccineType = 'complete') {
             hideTooltip();
         });
     
-    // Value labels - Male
     g.selectAll('.label-male')
         .data(pyramidData, d => d.label)
         .join(
@@ -407,7 +381,6 @@ function createPyramidChart(vaccineType = 'complete') {
                 )
         );
     
-    // Value labels - Female
     g.selectAll('.label-female')
         .data(pyramidData, d => d.label)
         .join(
@@ -442,25 +415,6 @@ function createPyramidChart(vaccineType = 'complete') {
                     .remove()
                 )
         );
-    
-    // Axes
-    // const xAxis = d3.axisBottom(x)
-    //     .ticks(8)
-    //     .tickFormat(d => showDepartements ? Math.abs(d / 1e3).toFixed(0) + 'K' : Math.abs(d / 1e6).toFixed(1) + 'M');
-    
-    // const xAxisGroup = g.selectAll('.x-axis')
-    //     .data([null])
-    //     .join('g')
-    //     .attr('class', 'x-axis')
-    //     .attr('transform', `translate(0,${height - margin.top - margin.bottom})`);
-    
-    // xAxisGroup.transition()
-    //     .duration(600)
-    //     .call(xAxis);
-    
-    // xAxisGroup.selectAll('text')
-    //     .style('fill', '#e0d5ff')
-    //     .style('font-size', '12px');
     
     const yAxisGroup = g.selectAll('.y-axis')
         .data([null])
