@@ -1,8 +1,8 @@
 
 import { CleanVaccin } from './clean.js?v=2';
-import { plotPyramidBarCharts } from './barPlot.js?v=6';
+import { plotPyramidBarCharts } from './barPlot.js?v=7';
 import { plotCumulativeUptake } from './tsPlot.js?v=6';
-import { createMapViz, highlightCountries, addCovidOverlay, showCovidStats, setFranceClickHandler } from './map_eu.js?v=10';
+import { createMapViz, highlightCountries, addCovidOverlay, showCovidStats, setFranceClickHandler } from './map_eu.js?v=11';
 import { plotTwoCountryComparison } from './kernelPlot.js?v=13';
 import { plotVaccinationHeatmap } from './heatmap.js?v=2';
 import { createStackedBarChart, createCumulativeLineChart, createEUMedianBarChart, createEUMedianLineChart } from './age_group_viz.js?v=21';

@@ -1207,8 +1207,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                 .on('click', function(event, d) {
                     event.stopPropagation();
 
-                    // Disable click-selection: do not select a single département.
-                    // If something was previously selected, clear it.
                     if (mapContext.selectedRegionCode) {
                         mapContext.selectedRegion = null;
                         mapContext.selectedRegionCode = null;
@@ -1217,8 +1215,6 @@ export function drawFranceMap(containerSelector = '#franceMap') {
                             mapContext.applySelectionEmphasis();
                         }
 
-                        // In vaccine-type mode, the top-3 computation may depend on selection,
-                        // so refresh dots/info panel after clearing.
                         if (typeof mapContext.refreshVaccineTypeView === 'function') {
                             mapContext.refreshVaccineTypeView();
                         }

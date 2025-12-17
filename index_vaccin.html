@@ -9,7 +9,7 @@
     <title>COVID-19 Vaccination Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/map.css?v=22">
-    <link rel="stylesheet" href="css/index_vaccin.css?v=28">
+    <link rel="stylesheet" href="css/index_vaccin.css?v=29">
 </head>
 
 <body>
@@ -98,10 +98,10 @@
                         <div id="mapArea" role="img" aria-label="Interactive map showing vaccination coverage across European countries" class="flex-1 md:flex-[3] overflow-auto w-full"></div>
 
                         <!-- Statistics Panel -->
-                        <aside id="mapStats" class="stats-panel flex-1 md:flex-[1] p-2 sm:p-3 overflow-y-auto max-h-[600px] border-2 border-slate-300/20 rounded-lg w-full" role="complementary" aria-label="Detailed vaccination statistics">
-                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 pb-2 border-b-2 border-slate-300/20">Vaccination Statistics</h3>
+                        <aside id="mapStats" class="stats-panel flex-1 md:flex-[1] p-2 sm:p-3 overflow-y-auto max-h-[600px] border-2 border-slate-300/20 rounded-lg w-full" role="complementary" aria-label="Population and total vaccines for selected countries">
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 pb-2 border-b-2 border-slate-300/20">Population & Total Vaccines</h3>
                             <div id="statsContent" aria-live="polite">
-                                <p class="loading-stats text-white italic text-center p-4">Select countries to view statistics</p>
+                                <p class="loading-stats text-white italic text-center p-4">Select two countries to view population and total vaccines</p>
                             </div>
                         </aside>
                     </div>
@@ -118,7 +118,7 @@
     
     
     <script type="text/javascript" src="./js/d3.v7.min.js"></script>
-    <script type="module" src="js/main_vaccin.js?v=134"></script>
+    <script type="module" src="js/main_vaccin.js?v=136"></script>
 
 </body>
 </html>

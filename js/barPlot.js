@@ -193,9 +193,9 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
     const xScaleRight = d3.scaleLinear().domain([0, maxTotal]).range([0, chartWidth]);
     
     // Create both charts
-    createHorizontalChart(svg, monthlyArray1, data1Map, allMonths, xScaleLeft, yScale, margin.left, true);
+    createHorizontalChart(svg, monthlyArray1, data1Map, allMonths, xScaleLeft, yScale, margin.left, true, maxTotal);
     createHorizontalChart(svg, monthlyArray2, data2Map, allMonths, xScaleRight, yScale, 
-        margin.left + chartWidth + centerGap, false);
+        margin.left + chartWidth + centerGap, false, maxTotal);
     
     // Add center Y-axis, labels, and legend
     addCenterAxis(svg, yScale, margin, chartWidth, centerGap, height);
@@ -204,6 +204,21 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
     
     console.log(`✅ Horizontal pyramid bar charts created successfully`);
 }
+
+function formatMillionsTick(value, maxValue) {
+    if (!Number.isFinite(value) || value === 0) return '0M';
+    const millions = value / 1e6;
+
+    // Use more precision when ranges are small (common for smaller countries)
+    let decimals;
+    if (maxValue < 5e6) decimals = 2;
+    else if (maxValue < 30e6) decimals = 1;
+    else decimals = 0;
+
+    const raw = millions.toFixed(decimals);
+    const cleaned = raw.replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+    return cleaned + 'M';
+}
 // ============================================
 // CHART RENDERING FUNCTIONS
 // ============================================
@@ -211,7 +226,7 @@ function plotPyramidBarCharts(data, countryCode1, countryCode2, startYear = 2020
 /**
  * Create horizontal stacked bar chart for one country
  */
-function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yScale, xOffset, isLeft) {
+function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yScale, xOffset, isLeft, maxTotal) {
     const { animation, styling } = CONFIG;
     const g = svg.append("g").attr("transform", `translate(${xOffset},${CONFIG.dimensions.pyramid.margin.top})`);
     const completeData = allMonths.map(month => {
@@ -258,7 +273,10 @@ function createHorizontalChart(svg, monthlyArray, dataMap, allMonths, xScale, yS
     });
     
     // Add X-axis
-    const xAxis = d3.axisBottom(xScale).ticks(5).tickFormat(d => (d / 1e6).toFixed(0) + "M");
+    // NOTE: avoid rounding to whole millions (causes duplicates like 1M, 1M, 2M...)
+    const xAxis = d3.axisBottom(xScale)
+        .ticks(5)
+        .tickFormat(d => formatMillionsTick(d, maxTotal));
     const xAxisGroup = g.append("g")
         .attr("class", "x-axis")
         .attr("transform", `translate(0,${CONFIG.dimensions.pyramid.height})`)

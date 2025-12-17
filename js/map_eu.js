@@ -371,80 +371,29 @@ function showComparisonStats(country1, country2) {
     const stats1 = getDetailedCountryStats(window.__mapVaccinData, country1);
     const stats2 = getDetailedCountryStats(window.__mapVaccinData, country2);
     
-    // Build HTML for stats panel
+    // Build HTML for stats panel (requested: only Population + Total vaccines)
     statsContent.innerHTML = `
-        <!-- Country 1 Stats Card -->
         <div class="country-stat-card country1">
             <h4>🔵 ${countryNames[country1] || country1}</h4>
             <div class="stat-row">
-                <span class="stat-label">Population</span>
+                <span class="stat-label">Pop:</span>
                 <span class="stat-value">${stats1.population}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Total Vaccines</span>
+                <span class="stat-label">Total vaccines</span>
                 <span class="stat-value">${stats1.totalVaccines}</span>
             </div>
-            <div class="stat-row">
-                <span class="stat-label">1st Dose</span>
-                <span class="stat-value">${stats1.firstDose} (${stats1.firstDosePercent}%)</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">2nd Dose</span>
-                <span class="stat-value">${stats1.secondDose} (${stats1.secondDosePercent}%)</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Booster</span>
-                <span class="stat-value">${stats1.booster} (${stats1.boosterPercent}%)</span>
-            </div>
         </div>
-        
-        <!-- Country 2 Stats Card -->
+
         <div class="country-stat-card country2">
             <h4>🔴 ${countryNames[country2] || country2}</h4>
             <div class="stat-row">
-                <span class="stat-label">Population</span>
+                <span class="stat-label">Pop:</span>
                 <span class="stat-value">${stats2.population}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Total Vaccines</span>
+                <span class="stat-label">Total vaccines</span>
                 <span class="stat-value">${stats2.totalVaccines}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">1st Dose</span>
-                <span class="stat-value">${stats2.firstDose} (${stats2.firstDosePercent}%)</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">2nd Dose</span>
-                <span class="stat-value">${stats2.secondDose} (${stats2.secondDosePercent}%)</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Booster</span>
-                <span class="stat-value">${stats2.booster} (${stats2.boosterPercent}%)</span>
-            </div>
-        </div>
-        
-        <!-- Comparison Section -->
-        <div class="comparison-section">
-            
-            <div class="comparison-bar">
-                <div class="comparison-bars">
-                    <div class="bar-segment country1" style="width: ${Math.min(stats1.firstDosePercent, 100)}%" title="${countryNames[country1]}: ${stats1.firstDosePercent}%"></div>
-                    <div class="bar-segment country2" style="width: ${Math.min(stats2.firstDosePercent, 100)}%" title="${countryNames[country2]}: ${stats2.firstDosePercent}%"></div>
-                </div>
-            </div>
-            
-            <div class="comparison-bar">
-                <div class="comparison-bars">
-                    <div class="bar-segment country1" style="width: ${Math.min(stats1.secondDosePercent, 100)}%" title="${countryNames[country1]}: ${stats1.secondDosePercent}%"></div>
-                    <div class="bar-segment country2" style="width: ${Math.min(stats2.secondDosePercent, 100)}%" title="${countryNames[country2]}: ${stats2.secondDosePercent}%"></div>
-                </div>
-            </div>
-            
-            <div class="comparison-bar">
-                <div class="comparison-bars">
-                    <div class="bar-segment country1" style="width: ${Math.min(stats1.boosterPercent, 100)}%" title="${countryNames[country1]}: ${stats1.boosterPercent}%"></div>
-                    <div class="bar-segment country2" style="width: ${Math.min(stats2.boosterPercent, 100)}%" title="${countryNames[country2]}: ${stats2.boosterPercent}%"></div>
-                </div>
             </div>
         </div>
     `;
