@@ -349,6 +349,18 @@ function showComparisonStats(country1, country2) {
     `;
 }
 
+function formatNumberK(value) {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return 'N/A';
+
+    const absValue = Math.abs(numericValue);
+    if (absValue < 1000) return Math.round(numericValue).toLocaleString();
+
+    const valueInK = numericValue / 1000;
+    const decimals = Math.abs(valueInK) < 100 ? 1 : 0;
+    return `${valueInK.toFixed(decimals).replace(/\.0$/, '')}K`;
+}
+
 function getDetailedCountryStats(data, countryCode) {
     const countryData = data.filter(d => 
         d.ReportingCountry === countryCode && 
@@ -383,8 +395,8 @@ function getDetailedCountryStats(data, countryCode) {
     const totalVaccines = firstDoseTotal + secondDoseTotal + boosterTotal;
     
     return {
-        population: population.toLocaleString(),
-        totalVaccines: Math.round(totalVaccines).toLocaleString(),
+        population: formatNumberK(population),
+        totalVaccines: formatNumberK(Math.round(totalVaccines)),
         firstDose: Math.round(firstDoseTotal).toLocaleString(),
         firstDosePercent: ((firstDoseTotal / population) * 100).toFixed(1),
         secondDose: Math.round(secondDoseTotal).toLocaleString(),

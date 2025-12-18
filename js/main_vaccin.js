@@ -2,7 +2,7 @@
 import { CleanVaccin } from './clean.js?v=2';
 import { plotPyramidBarCharts } from './barPlot.js?v=7';
 import { plotCumulativeUptake } from './tsPlot.js?v=6';
-import { createMapViz, highlightCountries, addCovidOverlay, showCovidStats, setFranceClickHandler } from './map_eu.js?v=11';
+import { createMapViz, highlightCountries, addCovidOverlay, showCovidStats, setFranceClickHandler } from './map_eu.js?v=12';
 import { plotTwoCountryComparison } from './kernelPlot.js?v=13';
 import { plotVaccinationHeatmap } from './heatmap.js?v=2';
 import { createStackedBarChart, createCumulativeLineChart, createEUMedianBarChart, createEUMedianLineChart } from './age_group_viz.js?v=21';
@@ -215,6 +215,11 @@ function createAgeGroupButton() {
         transition: all 0.3s ease;
         margin-left: 10px;
     `;
+
+    const franceBtn = document.createElement('button');
+    franceBtn.id = 'franceMapBtn';
+    franceBtn.textContent = '🇫🇷 France';
+    franceBtn.style.cssText = ageGroupBtn.style.cssText;
     
     const resetBtn = document.createElement('button');
     resetBtn.id = 'resetDashboardBtn';
@@ -241,11 +246,27 @@ function createAgeGroupButton() {
         ageGroupBtn.style.transform = '';
         ageGroupBtn.style.boxShadow = '';
     });
+
+    franceBtn.addEventListener('mouseenter', () => {
+        franceBtn.style.transform = 'translateY(-2px)';
+        franceBtn.style.boxShadow = '0 5px 20px rgba(167, 139, 250, 0.4)';
+    });
+
+    franceBtn.addEventListener('mouseleave', () => {
+        franceBtn.style.transform = '';
+        franceBtn.style.boxShadow = '';
+    });
     
     ageGroupBtn.addEventListener('click', () => {
         console.log('📊 Age Group button clicked - redirecting to age group page');
         
         window.location.href = 'index_agegroup.html';
+    });
+
+    franceBtn.addEventListener('click', () => {
+        console.log('🇫🇷 France button clicked - redirecting to France regional analysis page');
+
+        window.location.href = 'index_france.html';
     });
     
     resetBtn.addEventListener('click', () => {
@@ -256,6 +277,7 @@ function createAgeGroupButton() {
     
 
     globalControls.appendChild(ageGroupBtn);
+    globalControls.appendChild(franceBtn);
     globalControls.appendChild(resetBtn);
     
     console.log('✅ Age Group button created');
